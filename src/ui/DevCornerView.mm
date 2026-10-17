@@ -1084,7 +1084,21 @@ static NSURL* DCDevRepoURL(NSString* s)
                       trackingMode:NSSegmentSwitchTrackingSelectOne
                             target:self
                             action:@selector(tabChanged:)];
-    _tabs.segmentStyle    = NSSegmentStyleRounded;
+    _tabs.segmentStyle    = NSSegmentStyleAutomatic;
+    _tabs.controlSize     = NSControlSizeLarge;
+#if __MAC_OS_X_VERSION_MAX_ALLOWED >= 260000
+    if (@available(macOS 26, *))
+    {
+      _tabs.borderShape = NSControlBorderShapeCapsule;
+    }
+#endif
+#if __MAC_OS_X_VERSION_MAX_ALLOWED >= 270000
+    if (@available(macOS 27, *))
+    {
+      _tabs.role = NSSegmentedControlRoleTabs;
+    }
+#endif
+
     _tabs.selectedSegment = 0;
     DCStackCentered(page, _tabs);
     DCStackExpand(page, body);
