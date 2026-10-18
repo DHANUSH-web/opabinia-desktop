@@ -32,7 +32,7 @@ inline const char* sidebarSymbol(Module m)
     case Module::Duplicates:
       return "square.stack.3d.up.fill";
     case Module::Uninstaller:
-      return "app.grid";
+      return "appclip";
     case Module::Privacy:
       return "hand.raised.fill";
     case Module::SpaceLens:
