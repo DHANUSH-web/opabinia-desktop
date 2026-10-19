@@ -19,7 +19,7 @@ PRESET := debug
 endif
 
 BUILD_DIR = build/$(PRESET)
-APP = $(BUILD_DIR)/DeepCleanMyMac.app
+APP = $(BUILD_DIR)/Opabinia.app
 TESTS = $(BUILD_DIR)/dcmm-desktop-tests
 
 .PHONY: all build debug release test run open relaunch clean help init icon dmg dmg-bg format
@@ -65,7 +65,7 @@ open: run
 
 install: build
 	@echo "Installing $(APP) to /Applications"
-	@rm -rf /Applications/DeepCleanMyMac.app
+	@rm -rf /Applications/Opabinia.app
 	@mv $(APP) /Applications && echo "Successfully installed $(APP) to /Applications"
 
 dmg:
@@ -101,7 +101,7 @@ help:
 	@echo "  make all             build debug and release"
 	@echo "  make test            build + ctest (debug)"
 	@echo "  make test release    build + ctest (release)"
-	@echo "  make run             build and open DeepCleanMyMac.app"
+	@echo "  make run             build and open Opabinia.app"
 	@echo "  make run release     same, release preset"
 	@echo "  make relaunch        pkill + open (after UI changes)"
 	@echo "  make install         Install DeepCleanMyMac to /Applications (debug)"

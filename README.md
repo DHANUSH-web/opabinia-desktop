@@ -30,7 +30,7 @@ make init                 # extras/dcmmlib via SSH (GitHub main)
 make                      # debug (default)
 make build release
 make test
-make run                  # open DeepCleanMyMac.app
+make run                  # open Opabinia.app
 make clean
 ```
 
@@ -47,7 +47,7 @@ make init   # or: git submodule update --init extras/dcmmlib && git -C extras/dc
 cmake --preset release
 cmake --build build/release
 ctest --preset release
-open build/release/DeepCleanMyMac.app
+open build/release/Opabinia.app
 ```
 
 Debug: `--preset debug` (output in `build/debug`).
@@ -61,7 +61,7 @@ cmake -S . -B build/debug -G Ninja \
   -DCMAKE_BUILD_TYPE=Debug
 cmake --build build/debug
 ctest --test-dir build/debug --output-on-failure
-open build/debug/DeepCleanMyMac.app
+open build/debug/Opabinia.app
 
 # For release
 cmake -S . -B build/release -G Ninja \
@@ -69,7 +69,7 @@ cmake -S . -B build/release -G Ninja \
   -DCMAKE_BUILD_TYPE=Release
 cmake --build build/release
 ctest --test-dir build/release --output-on-failure
-open build/release/DeepCleanMyMac.app
+open build/release/Opabinia.app
 ```
 
 ## What the app does
