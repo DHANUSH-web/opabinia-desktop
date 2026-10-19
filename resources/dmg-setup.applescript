@@ -14,7 +14,7 @@ on run argv
       set arrangement of viewOptions to not arranged
       set icon size of viewOptions to 128
       set background picture of viewOptions to file ".background:background.png"
-      set position of item "DeepCleanMyMac.app" of container window to {195, 215}
+      set position of item "Opabinia.app" of container window to {195, 215}
       set position of item "Applications" of container window to {520, 215}
       delay 2
       close

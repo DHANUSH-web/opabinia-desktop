@@ -71,7 +71,7 @@ install: build
 dmg:
 	$(MAKE) build PRESET=release
 	cd build/release && cpack -G DragNDrop
-	@ls -lh build/release/DeepCleanMyMac-*.dmg
+	@ls -lh build/release/Opabinia-*.dmg
 
 format:
 	find include src tests -type f \( -name '*.cpp' -o -name '*.hpp' -o -name '*.h' -o -name '*.mm' -o -name '*.m' -o -name '*.cc' \) -print0 | xargs -0 clang-format -i
