@@ -112,7 +112,6 @@ help:
 	@echo "  make clean release   remove build/release"
 	@echo "  make init            clone/update extras/opalib from git@github.com:DHANUSH-web/opalib.git (main)"
 	@echo "  make icon            rebuild AppIcon.icns from resources/app-icon.png"
-	@echo "  make dmg-bg          rebuild resources/dmg-background.png"
 	@echo "  make format          clang-format include/, src/, tests/"
 	@echo
 	@echo "PRESET=$(PRESET)  APP=$(APP)"
