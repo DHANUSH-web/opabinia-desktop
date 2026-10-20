@@ -1,36 +1,36 @@
-# dcmm-desktop — agent instructions
+# opabinia-desktop — agent instructions
 
-Read this entire file before changing code. Do not ask the user to re-explain product, UI rules, or how this relates to dcmmlib.
+Read this entire file before changing code. Do not ask the user to re-explain product, UI rules, or how this relates to opalib.
 
 ## What this repo is
 
-**dcmm-desktop** is **DeepCleanMyMac**, a **macOS-only** native AppKit GUI (Objective-C++).
+**opabinia-desktop** is **Opabinia**, a **macOS-only** native AppKit GUI (Objective-C++).
 
 - It is **not** a cross-platform GUI and must not be ported to Windows/Linux in this repo.
-- A future Windows app will be a **separate project** that links **dcmmlib**.
-- All scanning, hashing, path safety, and trashing go through **dcmmlib**. Do not reimplement engine logic in `.mm` files.
+- A future Windows app will be a **separate project** that links **opalib**.
+- All scanning, hashing, path safety, and trashing go through **opalib**. Do not reimplement engine logic in `.mm` files.
 
 Typical workspace:
 
 ```
-DeepCleanMyMac/
-  dcmmlib/                 # engine (own git)
-  dcmm-desktop/            # this app (own git)
+Opabinia/
+  opalib/                  # engine (own git)
+  opabinia-desktop/        # this app (own git)
     include/               # this app's headers only
     src/                   # AppKit .mm
-    extras/dcmmlib/        # git submodule → https://github.com/DHANUSH-web/dcmmlib.git
+    extras/opalib/         # git submodule → https://github.com/DHANUSH-web/opalib.git
 ```
 
-Engine code is **only** `extras/dcmmlib`, a submodule of `https://github.com/DHANUSH-web/dcmmlib.git` tracking **`main`**. Do not tell contributors to clone dcmmlib as a second repo. `make init` and `git clone --recurse-submodules` must be enough.
+Engine code is **only** `extras/opalib`, a submodule of `https://github.com/DHANUSH-web/opalib.git` tracking **`main`**. Do not tell contributors to clone opalib as a second repo. `make init` and `git clone --recurse-submodules` must be enough.
 
-`make init` does `submodule update --init` then checks out **`origin/main`**. After engine work lands on dcmmlib **`main`**, run `make init` and commit the gitlink if the app should pick it up.
+`make init` does `submodule update --init` then checks out **`origin/main`**. After engine work lands on opalib **`main`**, run `make init` and commit the gitlink if the app should pick it up.
 
 ## Product
 
 Free CleanMyMac-style utility: Smart Scan, Deep Scan, Large Files, Duplicates, Uninstaller, Privacy, Aperture, Maintenance, Settings. Moves **checked** items to Trash after confirmation. No telemetry.
 
-Bundle ID: `com.deepclean.DeepCleanMyMac`  
-App name: DeepCleanMyMac  
+Bundle ID: `opa.dhanushhv.app`  
+App name: Opabinia  
 Entry: `src/main.mm` → `AppDelegate` → `DCMainWindowController`
 
 ## Build (macOS)
@@ -38,7 +38,7 @@ Entry: `src/main.mm` → `AppDelegate` → `DCMainWindowController`
 CMake + **Ninja** + **Apple Clang**. OBJCXX + ARC. Deployment target 13.0.
 
 ```bash
-make init                 # extras/dcmmlib submodule
+make init                 # extras/opalib submodule
 make                      # debug
 make build release
 make test
@@ -49,11 +49,11 @@ make relaunch             # pkill + open after UI changes
 CMake presets (equivalent):
 
 ```bash
-git submodule update --init extras/dcmmlib
+git submodule update --init extras/opalib
 cmake --preset release
 cmake --build --preset release
 ctest --preset release
-open build/release/DeepCleanMyMac.app
+open build/release/Opabinia.app
 ```
 
 Debug: `--preset debug` (`build/debug`). Presets are in `CMakePresets.json` (Ninja + Clang). Do not commit `CMakeUserPresets.json`.
@@ -68,7 +68,7 @@ cmake -S . -B build -G Ninja \
   -DCMAKE_BUILD_TYPE=Release
 cmake --build build
 ctest --test-dir build --output-on-failure
-open build/DeepCleanMyMac.app
+open build/Opabinia.app
 ```
 
 Links: `dcmm`, Cocoa, AppKit, Foundation, QuartzCore, Collaboration.
@@ -164,7 +164,7 @@ Do not call `unlink`/`removeItem` from the GUI except through the engine. Do not
 
 Check `git status` / `git branch` at the start of a session. If you are on `main`, switch to `beta` before editing.
 
-The engine repo **dcmmlib** develops on **`dev`**. After engine changes, point `extras/dcmmlib` at that `dev` commit (not `main`).
+The engine repo **opalib** develops on **`dev`**. After engine changes, point `extras/opalib` at that `dev` commit (not `main`).
 
 ## Commits
 
@@ -183,8 +183,8 @@ Public contribution docs: `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`
 
 - UI-only requests: headers in `include/` (`include/ui/`), implementations in `src/` (`src/ui/`). Do not “fix” catalogs unless asked.
 - Third-party code and the engine submodule belong in `extras/`, never at the repo root.
-- Behavior/safety/scan: change **dcmmlib** on **`dev`**, then sync `extras/dcmmlib`, then wire UI on **`beta`**.
-- After UI changes, `make relaunch` (or `pkill -x DeepCleanMyMac` then `open build/release/DeepCleanMyMac.app`).
+- Behavior/safety/scan: change **opalib** on **`dev`**, then sync `extras/opalib`, then wire UI on **`beta`**.
+- After UI changes, `make relaunch` (or `pkill -x Opabinia` then `open build/release/Opabinia.app`).
 - Match existing Objective-C++ style: ARC, helpers in `Theme.h`/`Widgets.mm`.
 
 ## Out of scope

@@ -4,8 +4,8 @@
 
 #include "dcmm/common/dcmm.h"
 
-static NSString* const kDCAboutDocsURL   = @"https://dcmm.dhanushhv.com/docs";
-static NSString* const kDCAboutGitHubURL = @"https://github.com/DHANUSH-web/DeepCleanMyMac";
+static NSString* const kDCAboutDocsURL   = @"https://opa.dhanushhv.com/docs";
+static NSString* const kDCAboutGitHubURL = @"https://github.com/DHANUSH-web/opabinia-desktop";
 
 @interface DCAboutBadge : NSView
 - (instancetype)initWithText:(NSString*)text;
@@ -88,12 +88,12 @@ static NSString* const kDCAboutGitHubURL = @"https://github.com/DHANUSH-web/Deep
   NSMenu* menubar     = [[NSMenu alloc] init];
   NSMenuItem* appItem = [[NSMenuItem alloc] init];
   [menubar addItem:appItem];
-  NSMenu* app = [[NSMenu alloc] initWithTitle:@"DeepCleanMyMac"];
-  [app addItemWithTitle:@"About DeepCleanMyMac" action:@selector(showAbout:) keyEquivalent:@""];
+  NSMenu* app = [[NSMenu alloc] initWithTitle:@"Opabinia"];
+  [app addItemWithTitle:@"About Opabinia" action:@selector(showAbout:) keyEquivalent:@""];
   [app addItem:[NSMenuItem separatorItem]];
   [app addItemWithTitle:@"Settings…" action:@selector(showSettings:) keyEquivalent:@","];
   [app addItem:[NSMenuItem separatorItem]];
-  [app addItemWithTitle:@"Hide DeepCleanMyMac" action:@selector(hide:) keyEquivalent:@"h"];
+  [app addItemWithTitle:@"Hide Opabinia" action:@selector(hide:) keyEquivalent:@"h"];
   NSMenuItem* hideOthers = [[NSMenuItem alloc] initWithTitle:@"Hide Others"
                                                       action:@selector(hideOtherApplications:)
                                                keyEquivalent:@"h"];
@@ -101,7 +101,7 @@ static NSString* const kDCAboutGitHubURL = @"https://github.com/DHANUSH-web/Deep
   [app addItem:hideOthers];
   [app addItemWithTitle:@"Show All" action:@selector(unhideAllApplications:) keyEquivalent:@""];
   [app addItem:[NSMenuItem separatorItem]];
-  [app addItemWithTitle:@"Quit DeepCleanMyMac" action:@selector(terminate:) keyEquivalent:@"q"];
+  [app addItemWithTitle:@"Quit Opabinia" action:@selector(terminate:) keyEquivalent:@"q"];
   appItem.submenu = app;
 
   NSMenuItem* editItem = [[NSMenuItem alloc] init];
@@ -138,7 +138,7 @@ static NSString* const kDCAboutGitHubURL = @"https://github.com/DHANUSH-web/Deep
     [icon.widthAnchor constraintEqualToConstant:96].active  = YES;
     [icon.heightAnchor constraintEqualToConstant:96].active = YES;
 
-    NSTextField* app = DCTitleLabel(@"DeepCleanMyMac");
+    NSTextField* app = DCTitleLabel(@"Opabinia");
     app.alignment    = NSTextAlignmentLeft;
 
     NSString* ver = @(dcmm_version());
@@ -190,7 +190,7 @@ static NSString* const kDCAboutGitHubURL = @"https://github.com/DHANUSH-web/Deep
                             NSWindowStyleMaskFullSizeContentView
                     backing:NSBackingStoreBuffered
                       defer:NO];
-    _about.title                      = @"About DeepCleanMyMac";
+    _about.title                      = @"About Opabinia";
     _about.titleVisibility            = NSWindowTitleHidden;
     _about.titlebarAppearsTransparent = YES;
     _about.opaque                     = YES;

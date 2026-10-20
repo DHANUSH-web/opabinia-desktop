@@ -1,4 +1,4 @@
-[submodule "dcmmlib"]
-	path = extras/dcmmlib
-	url = git@github.com:DHANUSH-web/dcmmlib.git
+[submodule "opalib"]
+	path = extras/opalib
+	url = git@github.com:DHANUSH-web/opalib.git
 	branch = main

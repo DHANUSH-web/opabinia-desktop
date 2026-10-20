@@ -7,7 +7,7 @@
   <key>CFBundleExecutable</key>
   <string>Opabinia</string>
   <key>CFBundleIdentifier</key>
-  <string>com.deepclean.DeepCleanMyMac</string>
+  <string>opa.dhanushhv.app</string>
   <key>CFBundleInfoDictionaryVersion</key>
   <string>6.0</string>
   <key>CFBundleName</key>
@@ -33,12 +33,12 @@
   <key>NSPrincipalClass</key>
   <string>NSApplication</string>
   <key>NSDesktopFolderUsageDescription</key>
-  <string>DeepCleanMyMac scans your Desktop to find large and duplicate files you can review before moving them to Trash.</string>
+  <string>Opabinia scans your Desktop to find large and duplicate files you can review before moving them to Trash.</string>
   <key>NSDocumentsFolderUsageDescription</key>
-  <string>DeepCleanMyMac scans Documents to find large and duplicate files you can review before moving them to Trash.</string>
+  <string>Opabinia scans Documents to find large and duplicate files you can review before moving them to Trash.</string>
   <key>NSDownloadsFolderUsageDescription</key>
-  <string>DeepCleanMyMac scans Downloads to find large and duplicate files you can review before moving them to Trash.</string>
+  <string>Opabinia scans Downloads to find large and duplicate files you can review before moving them to Trash.</string>
   <key>NSAppleEventsUsageDescription</key>
-  <string>DeepCleanMyMac asks Finder to count and empty Trash because macOS otherwise hides ~/.Trash from the app.</string>
+  <string>Opabinia asks Finder to count and empty Trash because macOS otherwise hides ~/.Trash from the app.</string>
 </dict>
 </plist>

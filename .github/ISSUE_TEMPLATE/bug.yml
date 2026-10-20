@@ -6,8 +6,8 @@ body:
   - type: markdown
     attributes:
       value: |
-        Engine-only bugs (allowlist, sizes, trash) go to [dcmmlib](https://github.com/DHANUSH-web/dcmmlib/issues).
-        Safety bypasses: [Security Advisories](https://github.com/DHANUSH-web/DeepCleanMyMac/security/advisories/new).
+        Engine-only bugs (allowlist, sizes, trash) go to [opalib](https://github.com/DHANUSH-web/opalib/issues).
+        Safety bypasses: [Security Advisories](https://github.com/DHANUSH-web/opabinia-desktop/security/advisories/new).
   - type: textarea
     id: what
     attributes:

@@ -20,7 +20,7 @@ endif
 
 BUILD_DIR = build/$(PRESET)
 APP = $(BUILD_DIR)/Opabinia.app
-TESTS = $(BUILD_DIR)/dcmm-desktop-tests
+TESTS = $(BUILD_DIR)/opabinia-tests
 
 .PHONY: all build debug release test run open relaunch clean help init icon dmg dmg-bg format
 
@@ -33,7 +33,7 @@ all:
 	$(MAKE) build PRESET=debug
 	$(MAKE) build PRESET=release
 
-ENGINE_GIT := git@github.com:DHANUSH-web/dcmmlib.git
+ENGINE_GIT := git@github.com:DHANUSH-web/opalib.git
 
 icon:
 	cd resources && swift render-icon.swift
@@ -42,15 +42,15 @@ dmg-bg:
 	cd resources && swift render-dmg-background.swift
 
 init:
-	git submodule sync -- extras/dcmmlib
-	git submodule update --init extras/dcmmlib
-	git -C extras/dcmmlib remote set-url origin "$(ENGINE_GIT)"
-	git -C extras/dcmmlib fetch origin main
-	git -C extras/dcmmlib checkout -B main origin/main
+	git submodule sync -- extras/opalib
+	git submodule update --init extras/opalib
+	git -C extras/opalib remote set-url origin "$(ENGINE_GIT)"
+	git -C extras/opalib fetch origin main
+	git -C extras/opalib checkout -B main origin/main
 
 build:
-	@if [ ! -f extras/dcmmlib/CMakeLists.txt ]; then \
-		echo "extras/dcmmlib missing — run: make init"; exit 1; \
+	@if [ ! -f extras/opalib/CMakeLists.txt ]; then \
+		echo "extras/opalib missing — run: make init"; exit 1; \
 	fi
 	cmake --preset $(PRESET)
 	cmake --build --preset $(PRESET)
@@ -77,7 +77,7 @@ format:
 	find include src tests -type f \( -name '*.cpp' -o -name '*.hpp' -o -name '*.h' -o -name '*.mm' -o -name '*.m' -o -name '*.cc' \) -print0 | xargs -0 clang-format -i
 
 relaunch: build
-	-pkill -x DeepCleanMyMac
+	-pkill -x Opabinia
 	open "$(APP)"
 
 clean:
@@ -104,13 +104,13 @@ help:
 	@echo "  make run             build and open Opabinia.app"
 	@echo "  make run release     same, release preset"
 	@echo "  make relaunch        pkill + open (after UI changes)"
-	@echo "  make install         Install DeepCleanMyMac to /Applications (debug)"
-	@echo "  make install release Install DeepCleanMyMac to /Applications (release)"
+	@echo "  make install         Install Opabinia to /Applications (debug)"
+	@echo "  make install release Install Opabinia to /Applications (release)"
 	@echo "  make dmg             Release build + DragNDrop DMG in build/release/"
 	@echo "  make clean           remove build/"
 	@echo "  make clean debug     remove build/debug"
 	@echo "  make clean release   remove build/release"
-	@echo "  make init            clone/update extras/dcmmlib from git@github.com:DHANUSH-web/dcmmlib.git (main)"
+	@echo "  make init            clone/update extras/opalib from git@github.com:DHANUSH-web/opalib.git (main)"
 	@echo "  make icon            rebuild AppIcon.icns from resources/app-icon.png"
 	@echo "  make dmg-bg          rebuild resources/dmg-background.png"
 	@echo "  make format          clang-format include/, src/, tests/"

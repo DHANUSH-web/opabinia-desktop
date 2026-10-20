@@ -41,10 +41,10 @@ jobs:
           fi
           if [ "$on_main" = 1 ]; then
             channel=stable
-            asset="build/release/DeepCleanMyMac-${ver}.dmg"
+            asset="build/release/Opabinia-${ver}.dmg"
           elif [ "$on_beta" = 1 ]; then
             channel=beta
-            asset="build/release/DeepCleanMyMac-${ver}-beta.dmg"
+            asset="build/release/Opabinia-${ver}-beta.dmg"
           else
             echo "Tag ${GITHUB_REF_NAME} is not on origin/main or origin/beta"
             exit 1
@@ -64,8 +64,8 @@ jobs:
         if: steps.meta.outputs.channel == 'beta'
         run: |
           ver="${{ steps.meta.outputs.ver }}"
-          src="build/release/DeepCleanMyMac-${ver}.dmg"
-          dest="build/release/DeepCleanMyMac-${ver}-beta.dmg"
+          src="build/release/Opabinia-${ver}.dmg"
+          dest="build/release/Opabinia-${ver}-beta.dmg"
           ls -lh build/release/*.dmg
           mv "$src" "$dest"
 
@@ -79,6 +79,6 @@ jobs:
           fi
           gh release create "${GITHUB_REF_NAME}" \
             "${{ steps.meta.outputs.asset }}" \
-            --title "DeepCleanMyMac ${GITHUB_REF_NAME}" \
+            --title "Opabinia ${GITHUB_REF_NAME}" \
             --generate-notes \
             "${extra[@]}"

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
-project(dcmm-desktop VERSION 1.0.0 LANGUAGES CXX OBJCXX)
+project(opabinia-desktop VERSION 1.0.0 LANGUAGES CXX OBJCXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -12,18 +12,18 @@ if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
 endif()
 
 if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  message(WARNING "dcmm-desktop is developed for LLVM/Clang. Current: ${CMAKE_CXX_COMPILER_ID}")
+  message(WARNING "opabinia-desktop is developed for LLVM/Clang. Current: ${CMAKE_CXX_COMPILER_ID}")
 endif()
 
 add_compile_options(-fobjc-arc -Wall -Wextra -Wno-unused-parameter)
 
-# Engine is extras/dcmmlib (git submodule from git@github.com:DHANUSH-web/dcmmlib.git, main).
+# Engine is extras/opalib (git submodule from git@github.com:DHANUSH-web/opalib.git, main).
 set(DCMM_BUILD_TESTS OFF CACHE BOOL "Disable engine tests when nested" FORCE)
 set(DCMM_BUILD_CLI OFF CACHE BOOL "Disable engine CLI when nested" FORCE)
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/extras/dcmmlib/CMakeLists.txt")
-  add_subdirectory(extras/dcmmlib)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/extras/opalib/CMakeLists.txt")
+  add_subdirectory(extras/opalib)
 else()
-  message(FATAL_ERROR "dcmmlib not found. Run: make init  (clones extras/dcmmlib via SSH, GitHub main)")
+  message(FATAL_ERROR "opalib not found. Run: make init  (clones extras/opalib via SSH, GitHub main)")
 endif()
 
 set(UI_SOURCES
@@ -44,9 +44,9 @@ set(UI_SOURCES
   src/ui/MainWindowController.mm
 )
 
-add_executable(DeepCleanMyMac MACOSX_BUNDLE ${UI_SOURCES})
-target_include_directories(DeepCleanMyMac PRIVATE include)
-target_link_libraries(DeepCleanMyMac PRIVATE
+add_executable(Opabinia MACOSX_BUNDLE ${UI_SOURCES})
+target_include_directories(Opabinia PRIVATE include)
+target_link_libraries(Opabinia PRIVATE
   dcmm
   "-framework Cocoa"
   "-framework AppKit"
@@ -64,22 +64,22 @@ target_link_libraries(DeepCleanMyMac PRIVATE
 
 set(ICON_FILE "${CMAKE_SOURCE_DIR}/resources/AppIcon.icns")
 if(EXISTS "${ICON_FILE}")
-  target_sources(DeepCleanMyMac PRIVATE "${ICON_FILE}")
+  target_sources(Opabinia PRIVATE "${ICON_FILE}")
   set_source_files_properties("${ICON_FILE}" PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 endif()
 
-set_target_properties(DeepCleanMyMac PROPERTIES
+set_target_properties(Opabinia PROPERTIES
   MACOSX_BUNDLE TRUE
   MACOSX_BUNDLE_INFO_PLIST "${CMAKE_SOURCE_DIR}/resources/Info.plist.in"
   MACOSX_BUNDLE_BUNDLE_NAME "Opabinia"
   MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION}"
   MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION}"
-  MACOSX_BUNDLE_GUI_IDENTIFIER "com.deepclean.DeepCleanMyMac"
+  MACOSX_BUNDLE_GUI_IDENTIFIER "com.deepclean.Opabinia"
   MACOSX_BUNDLE_ICON_FILE "AppIcon"
   OUTPUT_NAME "Opabinia"
 )
 
-install(TARGETS DeepCleanMyMac BUNDLE DESTINATION . COMPONENT Runtime)
+install(TARGETS Opabinia BUNDLE DESTINATION . COMPONENT Runtime)
 
 option(DCMM_DESKTOP_BUILD_TESTS "Build GoogleTest suite for the desktop app" ON)
 if(DCMM_DESKTOP_BUILD_TESTS)
@@ -93,7 +93,7 @@ if(DCMM_DESKTOP_BUILD_TESTS)
   set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
   FetchContent_MakeAvailable(googletest)
   enable_testing()
-  add_executable(dcmm-desktop-tests
+  add_executable(opabinia-tests
     src/SystemInfo.cpp
     tests/test_engine_link.cpp
     tests/test_modules.cpp
@@ -109,8 +109,8 @@ if(DCMM_DESKTOP_BUILD_TESTS)
     tests/test_maintenance.cpp
     tests/test_settings.cpp
   )
-  target_include_directories(dcmm-desktop-tests PRIVATE include tests)
-  target_link_libraries(dcmm-desktop-tests PRIVATE
+  target_include_directories(opabinia-tests PRIVATE include tests)
+  target_link_libraries(opabinia-tests PRIVATE
     dcmm
     GTest::gtest_main
     "-framework IOKit"
@@ -119,12 +119,12 @@ if(DCMM_DESKTOP_BUILD_TESTS)
     "-framework CoreFoundation"
   )
   include(GoogleTest)
-  gtest_discover_tests(dcmm-desktop-tests DISCOVERY_MODE PRE_TEST)
+  gtest_discover_tests(opabinia-tests DISCOVERY_MODE PRE_TEST)
 endif()
 
 set(CPACK_GENERATOR "DragNDrop")
-set(CPACK_PACKAGE_NAME "DeepCleanMyMac")
-set(CPACK_PACKAGE_VENDOR "DeepCleanMyMac")
+set(CPACK_PACKAGE_NAME "Opabinia")
+set(CPACK_PACKAGE_VENDOR "Opabinia")
 set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
 set(CPACK_PACKAGE_FILE_NAME "Opabinia-${PROJECT_VERSION}")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Clean junk from your Mac")

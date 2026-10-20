@@ -2505,7 +2505,7 @@ void DCRequestNotificationPermission(void)
 static void DCNotify(NSString* title, NSString* body)
 {
   NSUserNotification* n = [[NSUserNotification alloc] init];
-  n.title               = title.length ? title : @"DeepCleanMyMac";
+  n.title               = title.length ? title : @"Opabinia";
   n.informativeText     = body.length ? body : @"";
   n.soundName           = NSUserNotificationDefaultSoundName;
 

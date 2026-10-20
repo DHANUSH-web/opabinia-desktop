@@ -1,13 +1,13 @@
 # Security policy
 
-DeepCleanMyMac moves user-selected files to Trash through dcmmlib. Bugs can destroy data.
+Opabinia moves user-selected files to Trash through dcmmlib. Bugs can destroy data.
 
 ## Please report privately
 
 **Do not** open a public issue for allowlist bypasses, surprise deletes, or symlink escapes.
 
-- App / UI: [GitHub Security Advisories](https://github.com/DHANUSH-web/DeepCleanMyMac/security/advisories/new)
-- Engine: [dcmmlib advisories](https://github.com/DHANUSH-web/dcmmlib/security/advisories/new)
+- App / UI: [GitHub Security Advisories](https://github.com/DHANUSH-web/opabinia-desktop/security/advisories/new)
+- Engine: [dcmmlib advisories](https://github.com/DHANUSH-web/opalib/security/advisories/new)
 
 ## In scope
 

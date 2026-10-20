@@ -1,32 +1,32 @@
-# DeepCleanMyMac
+# Opabinia
 
-[![CI](https://github.com/DHANUSH-web/DeepCleanMyMac/actions/workflows/ci.yml/badge.svg)](https://github.com/DHANUSH-web/DeepCleanMyMac/actions/workflows/ci.yml)
+[![CI](https://github.com/DHANUSH-web/opabinia-desktop/actions/workflows/ci.yml/badge.svg)](https://github.com/DHANUSH-web/opabinia-desktop/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-Native **macOS** cleaner (AppKit, Objective-C++). All scanning, hashing, safety checks, and trashing go through **[dcmmlib](https://github.com/DHANUSH-web/dcmmlib)** as a Git submodule (`extras/dcmmlib`) — no engine logic lives here.
+Native **macOS** cleaner (AppKit, Objective-C++). All scanning, hashing, safety checks, and trashing go through **[opalib](https://github.com/DHANUSH-web/opalib)** as a Git submodule (`extras/opalib`) — no engine logic lives here.
 
 ## Layout
 
 ```
-dcmm-desktop/
+opabinia-desktop/
   include/           App headers (AppDelegate, Modules, ui/)
   src/               AppKit implementations
-  extras/dcmmlib/    git submodule (engine)
+  extras/opalib/     git submodule (engine)
   tests/             GoogleTest (engine link + module titles)
 ```
 
-You do **not** need a separate dcmmlib clone. The engine lives only at `extras/dcmmlib`, pulled from **`main`** over SSH (`git@github.com:DHANUSH-web/dcmmlib.git`). The engine repo is private; GitHub SSH keys are required for `make init` and `--recurse-submodules`.
+You do **not** need a separate opalib clone. The engine lives only at `extras/opalib`, pulled from **`main`** over SSH (`git@github.com:DHANUSH-web/opalib.git`). The engine repo is private; GitHub SSH keys are required for `make init` and `--recurse-submodules`.
 
 ```bash
-git clone --recurse-submodules https://github.com/DHANUSH-web/DeepCleanMyMac.git
-cd DeepCleanMyMac
-make init                 # extras/dcmmlib via SSH (also if you cloned without --recurse-submodules)
+git clone --recurse-submodules https://github.com/DHANUSH-web/opabinia-desktop.git
+cd opabinia-desktop
+make init                 # extras/opalib via SSH (also if you cloned without --recurse-submodules)
 ```
 
 ## Build (LLVM + Clang + Ninja)
 
 ```bash
-make init                 # extras/dcmmlib via SSH (GitHub main)
+make init                 # extras/opalib via SSH (GitHub main)
 make                      # debug (default)
 make build release
 make test
@@ -36,14 +36,10 @@ make clean
 
 `make help` lists presets (`debug` / `release` / `all`), `relaunch`, and `test release`.
 
-## Xcode
-
-Open `DeepCleanMyMac.xcodeproj` (double-click, or File → Open in Xcode). Scheme **DeepCleanMyMac**, then ⌘B / ⌘R. Run `make init` first so `extras/dcmmlib` is present. CLI builds with Ninja are unchanged (`make` / `make build release`).
-
 Equivalent with CMake presets:
 
 ```bash
-make init   # or: git submodule update --init extras/dcmmlib && git -C extras/dcmmlib checkout main
+make init   # or: git submodule update --init extras/opalib && git -C extras/opalib checkout main
 cmake --preset release
 cmake --build build/release
 ctest --preset release
@@ -82,13 +78,13 @@ open build/release/Opabinia.app
 - Aperture (home-folder usage)
 - Maintenance (empty Trash, flush DNS, rebuild Launch Services)
 
-Selected items are **moved to Trash** by `dcmmlib`. Protected paths are rejected by the engine.
+Selected items are **moved to Trash** by `opalib`. Protected paths are rejected by the engine.
 
 ## Contributing
 
 Development happens on **`beta`**. `main` is stable. See [CONTRIBUTING.md](CONTRIBUTING.md). Please follow the [code of conduct](CODE_OF_CONDUCT.md). Security issues: [SECURITY.md](SECURITY.md).
 
-Engine PRs go to [dcmmlib](https://github.com/DHANUSH-web/dcmmlib) on **`dev`**.
+Engine PRs go to [opalib](https://github.com/DHANUSH-web/opalib) on **`dev`**.
 
 ## License
 

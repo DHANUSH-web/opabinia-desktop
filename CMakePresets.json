@@ -19,7 +19,7 @@
       "name": "debug",
       "inherits": "base",
       "displayName": "Debug",
-      "description": "Debug build of DeepCleanMyMac (Ninja + Clang, macOS AppKit)",
+      "description": "Debug build of Opabinia (Ninja + Clang, macOS AppKit)",
       "binaryDir": "${sourceDir}/build/debug",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug"
@@ -29,7 +29,7 @@
       "name": "release",
       "inherits": "base",
       "displayName": "Release",
-      "description": "Release build of DeepCleanMyMac (Ninja + Clang, macOS AppKit)",
+      "description": "Release build of Opabinia (Ninja + Clang, macOS AppKit)",
       "binaryDir": "${sourceDir}/build/release",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"

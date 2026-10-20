@@ -54,7 +54,7 @@ constexpr CGFloat kWindowMinHeight = 520;
                           NSWindowStyleMaskFullSizeContentView
                   backing:NSBackingStoreBuffered
                     defer:NO];
-  // win.title = @"DeepCleanMyMac";
+  // win.title = @"Opabinia";
   win.minSize                    = NSMakeSize(kWindowWidth, kWindowMinHeight);
   win.maxSize                    = NSMakeSize(kWindowWidth, CGFLOAT_MAX);
   win.releasedWhenClosed         = NO;
