@@ -22,7 +22,7 @@ BUILD_DIR = build/$(PRESET)
 APP = $(BUILD_DIR)/Opabinia.app
 TESTS = $(BUILD_DIR)/opabinia-tests
 
-.PHONY: all build debug release test run open relaunch clean help init icon dmg dmg-bg format
+.PHONY: all build debug release test run open relaunch clean help init dmg dmg-bg format
 
 .DEFAULT_GOAL := build
 
@@ -34,9 +34,6 @@ all:
 	$(MAKE) build PRESET=release
 
 ENGINE_GIT := git@github.com:DHANUSH-web/opalib.git
-
-icon:
-	cd resources && swift render-icon.swift
 
 dmg-bg:
 	cd resources && swift render-dmg-background.swift
@@ -93,7 +90,7 @@ else
 endif
 
 help:
-	@echo "Usage: make [build | run | test | format | clean | relaunch | init | icon | help] [debug | release | all]"
+	@echo "Usage: make [build | run | test | format | clean | relaunch | init | help] [debug | release | all]"
 	@echo
 	@echo "  make                 build debug (default)"
 	@echo "  make build           build debug"
@@ -111,7 +108,6 @@ help:
 	@echo "  make clean debug     remove build/debug"
 	@echo "  make clean release   remove build/release"
 	@echo "  make init            clone/update extras/opalib from git@github.com:DHANUSH-web/opalib.git (main)"
-	@echo "  make icon            rebuild AppIcon.icns from resources/app-icon.png"
 	@echo "  make format          clang-format include/, src/, tests/"
 	@echo
 	@echo "PRESET=$(PRESET)  APP=$(APP)"

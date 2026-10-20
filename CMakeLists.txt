@@ -62,11 +62,33 @@ target_link_libraries(Opabinia PRIVATE
   "-weak_framework Symbols"
 )
 
-set(ICON_FILE "${CMAKE_SOURCE_DIR}/resources/AppIcon.icns")
-if(EXISTS "${ICON_FILE}")
-  target_sources(Opabinia PRIVATE "${ICON_FILE}")
-  set_source_files_properties("${ICON_FILE}" PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
-endif()
+set(ICON_SOURCE "${CMAKE_SOURCE_DIR}/resources/opabinia-app-icon.icon")
+set(ICON_GEN_DIR "${CMAKE_BINARY_DIR}/generated/AppIcon")
+set(ICON_CAR "${ICON_GEN_DIR}/Assets.car")
+set(ICON_ICNS "${ICON_GEN_DIR}/opabinia-app-icon.icns")
+add_custom_command(
+  OUTPUT "${ICON_CAR}" "${ICON_ICNS}"
+  COMMAND "${CMAKE_COMMAND}" -E make_directory "${ICON_GEN_DIR}"
+  COMMAND xcrun actool "${ICON_SOURCE}"
+          --compile "${ICON_GEN_DIR}"
+          --output-format human-readable-text
+          --notices
+          --warnings
+          --app-icon opabinia-app-icon
+          --include-all-app-icons
+          --platform macosx
+          --minimum-deployment-target 26.0
+          --output-partial-info-plist "${ICON_GEN_DIR}/partial.plist"
+  DEPENDS
+    "${ICON_SOURCE}/icon.json"
+    "${ICON_SOURCE}/Assets/Opa.svg"
+  VERBATIM
+)
+target_sources(Opabinia PRIVATE "${ICON_CAR}" "${ICON_ICNS}")
+set_source_files_properties("${ICON_CAR}" "${ICON_ICNS}" PROPERTIES
+  MACOSX_PACKAGE_LOCATION Resources
+  GENERATED TRUE
+)
 
 set_target_properties(Opabinia PROPERTIES
   MACOSX_BUNDLE TRUE
@@ -75,7 +97,7 @@ set_target_properties(Opabinia PROPERTIES
   MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION}"
   MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION}"
   MACOSX_BUNDLE_GUI_IDENTIFIER "com.deepclean.Opabinia"
-  MACOSX_BUNDLE_ICON_FILE "AppIcon"
+  MACOSX_BUNDLE_ICON_FILE "opabinia-app-icon"
   OUTPUT_NAME "Opabinia"
 )
 
