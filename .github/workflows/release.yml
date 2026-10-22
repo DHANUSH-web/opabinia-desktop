@@ -25,7 +25,7 @@ jobs:
         id: meta
         run: |
           git fetch origin main beta
-          ver="$(sed -n 's/^project(dcmm-desktop VERSION \([0-9.]*\).*/\1/p' CMakeLists.txt)"
+          ver="$(sed -n 's/^project([^ ]* VERSION \([0-9.]*\).*/\1/p' CMakeLists.txt)"
           tag="${GITHUB_REF_NAME#v}"
           base="${tag%%-*}"
           if [ "$base" != "$ver" ]; then
