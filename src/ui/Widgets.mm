@@ -244,16 +244,16 @@ static BOOL DCButtonIsProminent(NSButton* b)
 static NSColor* DCTintedAccentFill(NSButton* b)
 {
   NSColor* accent = NSColor.controlAccentColor;
-  CGFloat alpha   = 0.2;
+  CGFloat alpha   = 0.1;
 
   if (!b.enabled)
   {
     accent = [accent colorWithSystemEffect:NSColorSystemEffectDisabled];
-    alpha  = 0.12;
+    alpha  = 0.06;
   }
   else if (b.cell.isHighlighted)
   {
-    alpha = 0.34;
+    alpha = 0.18;
   }
 
   return [accent colorWithAlphaComponent:alpha];

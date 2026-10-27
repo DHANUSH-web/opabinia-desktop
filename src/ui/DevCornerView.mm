@@ -1011,7 +1011,7 @@ static NSURL* DCDevRepoURL(NSString* s)
 
 - (void)updateLayer
 {
-  self.layer.backgroundColor = [NSColor.controlAccentColor colorWithAlphaComponent:0.2].CGColor;
+  self.layer.backgroundColor = [NSColor.controlAccentColor colorWithAlphaComponent:0.1].CGColor;
   _selector.layer.backgroundColor = NSColor.controlAccentColor.CGColor;
 }
 
