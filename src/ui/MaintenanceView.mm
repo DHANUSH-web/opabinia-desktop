@@ -104,12 +104,12 @@ ConfirmCopy ConfirmForTask(const std::string& id, const dcmm::MaintenanceTask& t
   [text setContentCompressionResistancePriority:1
                                  forOrientation:NSLayoutConstraintOrientationHorizontal];
 
-  DCGlowButton* run = [DCGlowButton defaultButtonWithTitle:@"Execute"
-                                                    target:self
-                                                    action:@selector(runTask:)
-                                                 glowColor:NSColor.controlAccentColor
-                                             glowLineWidth:2.5
-                                                 clockwise:YES];
+  DCGlowButton* run = [DCGlowButton buttonWithTitle:@"Execute"
+                                             target:self
+                                             action:@selector(runTask:)
+                                          glowColor:NSColor.controlAccentColor
+                                      glowLineWidth:2.5
+                                          clockwise:YES];
   run.tag           = index;
   [run setContentHuggingPriority:NSLayoutPriorityRequired
                   forOrientation:NSLayoutConstraintOrientationHorizontal];
