@@ -949,6 +949,10 @@ static NSURL* DCDevRepoURL(NSString* s)
 - (void)setToolchain:(BOOL)toolchain animated:(BOOL)animated;
 @end
 
+static const CGFloat kDevTabPad     = 3;
+static const CGFloat kDevTabInset   = 1;
+static const CGFloat kDevTabCapsule = 100;
+
 @implementation DCDevTabSlot
 {
   NSView* _selector;
@@ -982,23 +986,36 @@ static NSURL* DCDevRepoURL(NSString* s)
     [self addSubview:_apps];
     [self addSubview:_tools];
 
-    _selectorLeading = [_selector.leadingAnchor constraintEqualToAnchor:self.leadingAnchor constant:1];
+    _selectorLeading = [_selector.leadingAnchor constraintEqualToAnchor:self.leadingAnchor
+                                                               constant:kDevTabPad + kDevTabInset];
     [NSLayoutConstraint activateConstraints:@[
-      [self.heightAnchor constraintEqualToConstant:36],
-      [_apps.leadingAnchor constraintEqualToAnchor:self.leadingAnchor],
+      [self.heightAnchor constraintEqualToConstant:32],
+      [_apps.leadingAnchor constraintEqualToAnchor:self.leadingAnchor constant:kDevTabPad],
       [_apps.topAnchor constraintEqualToAnchor:self.topAnchor],
       [_apps.bottomAnchor constraintEqualToAnchor:self.bottomAnchor],
       [_tools.leadingAnchor constraintEqualToAnchor:_apps.trailingAnchor],
-      [_tools.trailingAnchor constraintEqualToAnchor:self.trailingAnchor],
+      [_tools.trailingAnchor constraintEqualToAnchor:self.trailingAnchor constant:-kDevTabPad],
       [_tools.topAnchor constraintEqualToAnchor:self.topAnchor],
       [_tools.bottomAnchor constraintEqualToAnchor:self.bottomAnchor],
-      [_apps.widthAnchor constraintEqualToAnchor:_tools.widthAnchor],
-      [_apps.widthAnchor constraintGreaterThanOrEqualToConstant:100],
+      [_apps.widthAnchor constraintEqualToConstant:kDevTabCapsule],
+      [_tools.widthAnchor constraintEqualToConstant:kDevTabCapsule],
       _selectorLeading,
       [_selector.centerYAnchor constraintEqualToAnchor:self.centerYAnchor],
       [_selector.heightAnchor constraintEqualToAnchor:self.heightAnchor constant:-6],
-      [_selector.widthAnchor constraintEqualToAnchor:self.widthAnchor multiplier:0.5 constant:-2],
+      [_selector.widthAnchor constraintEqualToAnchor:_apps.widthAnchor constant:-(kDevTabInset * 2)],
     ]];
+    [self setContentHuggingPriority:NSLayoutPriorityRequired
+                    forOrientation:NSLayoutConstraintOrientationHorizontal];
+    [self setContentCompressionResistancePriority:NSLayoutPriorityRequired
+                                  forOrientation:NSLayoutConstraintOrientationHorizontal];
+    [_apps setContentHuggingPriority:NSLayoutPriorityDefaultLow
+                      forOrientation:NSLayoutConstraintOrientationHorizontal];
+    [_tools setContentHuggingPriority:NSLayoutPriorityDefaultLow
+                       forOrientation:NSLayoutConstraintOrientationHorizontal];
+    [_apps setContentCompressionResistancePriority:NSLayoutPriorityDefaultLow
+                                    forOrientation:NSLayoutConstraintOrientationHorizontal];
+    [_tools setContentCompressionResistancePriority:NSLayoutPriorityDefaultLow
+                                     forOrientation:NSLayoutConstraintOrientationHorizontal];
     [self applyTitles];
   }
   return self;
@@ -1035,19 +1052,16 @@ static NSURL* DCDevRepoURL(NSString* s)
 
 - (CGFloat)selectorConstant
 {
-  if (_toolchain)
-  {
-    return NSWidth(self.bounds) / 2 + 1;
-  }
-  return 1;
+  CGFloat buttonWidth = (NSWidth(self.bounds) - kDevTabPad * 2) / 2;
+  CGFloat origin      = _toolchain ? kDevTabPad + buttonWidth : kDevTabPad;
+  return origin + kDevTabInset;
 }
 
 - (void)applyTitles
 {
-  NSFont* on  = [NSFont systemFontOfSize:13 weight:NSFontWeightSemibold];
-  NSFont* off = [NSFont systemFontOfSize:13 weight:NSFontWeightMedium];
-  _apps.font            = _toolchain ? off : on;
-  _tools.font           = _toolchain ? on : off;
+  NSFont* font = [NSFont systemFontOfSize:12 weight:NSFontWeightMedium];
+  _apps.font   = font;
+  _tools.font  = font;
   _apps.contentTintColor  = _toolchain ? NSColor.controlAccentColor : NSColor.whiteColor;
   _tools.contentTintColor = _toolchain ? NSColor.whiteColor : NSColor.controlAccentColor;
 }
