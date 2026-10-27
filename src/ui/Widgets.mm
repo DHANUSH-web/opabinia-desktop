@@ -1,6 +1,10 @@
 #import "ui/Theme.h"
 
 #include "AppFeatures.hpp"
+
+#include <errno.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include "dcmm/common/path.hpp"
 
 #include <cstdlib>
@@ -236,6 +240,15 @@ static BOOL DCNativePillBezel(void)
   return YES;
 }
 
+@interface DCSystemPushButton : NSButton
+@property(nonatomic) BOOL secondaryDestructive;
+@end
+
+static BOOL DCButtonIsSecondaryDestructive(NSButton* b)
+{
+  return [b isKindOfClass:[DCSystemPushButton class]] && ((DCSystemPushButton*)b).secondaryDestructive;
+}
+
 static BOOL DCButtonIsProminent(NSButton* b)
 {
   return b.bezelColor != nil || [b.keyEquivalent isEqualToString:@"\r"];
@@ -243,7 +256,7 @@ static BOOL DCButtonIsProminent(NSButton* b)
 
 static NSColor* DCTintedAccentFill(NSButton* b)
 {
-  NSColor* accent = NSColor.controlAccentColor;
+  NSColor* accent = DCButtonIsSecondaryDestructive(b) ? NSColor.systemRedColor : NSColor.controlAccentColor;
   CGFloat alpha   = 0.1;
 
   if (!b.enabled)
@@ -316,7 +329,7 @@ static NSColor* DCButtonTitleColor(NSButton* b)
     return NSColor.whiteColor;
   }
 
-  NSColor* accent = NSColor.controlAccentColor;
+  NSColor* accent = DCButtonIsSecondaryDestructive(b) ? NSColor.systemRedColor : NSColor.controlAccentColor;
 
   if (!b.enabled)
   {
@@ -360,8 +373,6 @@ static NSSize DCCapsuleSize(NSSize titleSize, NSControlSize size)
   return titleSize;
 }
 
-@interface DCSystemPushButton : NSButton
-@end
 @implementation DCSystemPushButton
 - (void)drawRect:(NSRect)dirtyRect
 {
@@ -748,6 +759,16 @@ void DCGlowButtonSetActive(NSButton* button, BOOL on)
   {
     [g endGlow];
   }
+}
+
+void DCSetSecondaryDestructive(NSButton* button, BOOL on)
+{
+  if ([button isKindOfClass:[DCSystemPushButton class]])
+  {
+    ((DCSystemPushButton*)button).secondaryDestructive = on;
+  }
+  DCApplyCapsuleTitle(button);
+  [button setNeedsDisplay:YES];
 }
 
 NSButton* DCDestructiveButton(NSString* title, id target, SEL action)
@@ -2651,6 +2672,127 @@ void DCRequestNotificationPermission(void)
   }
 
   NSUserNotificationCenter.defaultUserNotificationCenter.delegate = gNotifyDelegate;
+}
+
+BOOL DCHasFullDiskAccess(void)
+{
+  int fd = open("/Library/Application Support/com.apple.TCC/TCC.db", O_RDONLY);
+  if (fd >= 0)
+  {
+    close(fd);
+    return YES;
+  }
+
+  return NO;
+}
+
+static void DCOpenSettingsURLs(NSArray<NSString*>* urls)
+{
+  NSWorkspace* workspace = NSWorkspace.sharedWorkspace;
+  for (NSString* raw in urls)
+  {
+    NSURL* url = [NSURL URLWithString:raw];
+    if (url != nil && [workspace openURL:url])
+    {
+      return;
+    }
+  }
+}
+
+void DCOpenAccessSettings(DCAccessKind kind)
+{
+  NSString* anchor = @"Privacy_FilesAndFolders";
+  if (kind == DCAccessFullDisk)
+  {
+    anchor = @"Privacy_AllFiles";
+  }
+  else if (kind == DCAccessFinder)
+  {
+    anchor = @"Privacy_Automation";
+  }
+
+  DCOpenSettingsURLs(@[
+    [@"x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension?" stringByAppendingString:anchor],
+    [@"x-apple.systempreferences:com.apple.preference.security?" stringByAppendingString:anchor],
+  ]);
+}
+
+void DCOpenFullDiskAccessSettings(void)
+{
+  DCOpenAccessSettings(DCAccessFullDisk);
+}
+
+static NSString* DCAccessPath(DCAccessKind kind)
+{
+  NSString* home = NSHomeDirectory();
+  if (kind == DCAccessDesktop)
+  {
+    return [home stringByAppendingPathComponent:@"Desktop"];
+  }
+  if (kind == DCAccessDocuments)
+  {
+    return [home stringByAppendingPathComponent:@"Documents"];
+  }
+  if (kind == DCAccessDownloads)
+  {
+    return [home stringByAppendingPathComponent:@"Downloads"];
+  }
+  return nil;
+}
+
+static BOOL DCPathIsReadable(NSString* path)
+{
+  NSError* error = nil;
+  NSArray* items = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:path error:&error];
+  return items != nil && error == nil;
+}
+
+static BOOL DCFinderIsAllowed(void)
+{
+  NSDictionary* error = nil;
+  NSAppleScript* script =
+      [[NSAppleScript alloc] initWithSource:@"tell application \"Finder\" to get the name of the startup disk"];
+  NSAppleEventDescriptor* result = [script executeAndReturnError:&error];
+  return result != nil && error == nil;
+}
+
+BOOL DCAccessIsGranted(DCAccessKind kind)
+{
+  if (kind == DCAccessFullDisk)
+  {
+    return DCHasFullDiskAccess();
+  }
+  if (kind == DCAccessFinder)
+  {
+    return DCFinderIsAllowed();
+  }
+
+  NSString* path = DCAccessPath(kind);
+  if (path == nil)
+  {
+    return NO;
+  }
+  return DCPathIsReadable(path);
+}
+
+void DCRequestAccess(DCAccessKind kind)
+{
+  if (kind == DCAccessFullDisk)
+  {
+    DCOpenFullDiskAccessSettings();
+    return;
+  }
+  if (kind == DCAccessFinder)
+  {
+    (void)DCFinderIsAllowed();
+    return;
+  }
+
+  NSString* path = DCAccessPath(kind);
+  if (path != nil)
+  {
+    (void)DCPathIsReadable(path);
+  }
 }
 
 static void DCNotify(NSString* title, NSString* body)

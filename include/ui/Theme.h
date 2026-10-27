@@ -28,6 +28,7 @@ NSTextField* DCTitleLabel(NSString* text);
 NSButton* DCPushButton(NSString* title, id target, SEL action);
 NSButton* DCDefaultButton(NSString* title, id target, SEL action);
 NSButton* DCDestructiveButton(NSString* title, id target, SEL action);
+void DCSetSecondaryDestructive(NSButton* button, BOOL on);
 
 /// Plain button with a capsule fill and a traveling glow. Callers pass title, action,
 /// glow color, stroke width, and orbit direction. Face, title, and border colors
@@ -237,6 +238,19 @@ BOOL DCConfirmSpaceLensClean(NSArray<NSString*>* paths, uint64_t bytes);
 BOOL DCConfirmMoveToTrash(NSArray<NSString*>* paths, uint64_t bytes);
 BOOL DCConfirmDestructive(NSString* title, NSString* info, NSString* proceedTitle);
 void DCRequestNotificationPermission(void);
+BOOL DCHasFullDiskAccess(void);
+void DCOpenFullDiskAccessSettings(void);
+
+typedef NS_ENUM(NSInteger, DCAccessKind) {
+  DCAccessFullDisk = 0,
+  DCAccessDesktop,
+  DCAccessDocuments,
+  DCAccessDownloads,
+  DCAccessFinder,
+};
+BOOL DCAccessIsGranted(DCAccessKind kind);
+void DCRequestAccess(DCAccessKind kind);
+void DCOpenAccessSettings(DCAccessKind kind);
 void DCInformNothingToClean(NSString* detail);
 void DCInformCleaned(NSString* title, NSString* detail);
 

@@ -213,6 +213,18 @@
 
 @end
 
+@interface DCSettingsDoc : NSView
+@end
+
+@implementation DCSettingsDoc
+
+- (BOOL)isFlipped
+{
+  return YES;
+}
+
+@end
+
 @interface DCSettingsView () <NSTextFieldDelegate>
 @end
 
@@ -226,6 +238,10 @@
   NSSwitch* _dupHome;
   NSSlider* _dupMin;
   DCSliderTickLabels* _dupMinTicks;
+  NSButton* _accessButtons[5];
+  NSScrollView* _scroll;
+  DCSettingsDoc* _doc;
+  NSStackView* _column;
 }
 
 - (instancetype)initWithFrame:(NSRect)frame
@@ -233,7 +249,38 @@
   self = [super initWithFrame:frame];
   if (self)
   {
-    NSStackView* page   = DCPageStack(self);
+    _scroll                                   = [[NSScrollView alloc] initWithFrame:NSZeroRect];
+    _scroll.drawsBackground                   = NO;
+    _scroll.hasVerticalScroller               = YES;
+    _scroll.hasHorizontalScroller             = NO;
+    _scroll.autohidesScrollers                = YES;
+    _scroll.borderType                        = NSNoBorder;
+    _scroll.automaticallyAdjustsContentInsets = NO;
+    _scroll.contentInsets                     = NSEdgeInsetsZero;
+    _scroll.translatesAutoresizingMaskIntoConstraints = NO;
+    [self addSubview:_scroll];
+    DCPinEdges(_scroll, self);
+
+    _doc                = [[DCSettingsDoc alloc] initWithFrame:NSZeroRect];
+    _column             = [NSStackView stackViewWithViews:@[]];
+    _column.orientation = NSUserInterfaceLayoutOrientationVertical;
+    _column.alignment   = NSLayoutAttributeLeading;
+    _column.distribution = NSStackViewDistributionFill;
+    _column.spacing      = 16;
+    _column.edgeInsets   = NSEdgeInsetsMake(24, 28, 24, 28);
+    _column.translatesAutoresizingMaskIntoConstraints = NO;
+    [_column setContentCompressionResistancePriority:NSLayoutPriorityRequired
+                               forOrientation:NSLayoutConstraintOrientationVertical];
+    [_doc addSubview:_column];
+    [NSLayoutConstraint activateConstraints:@[
+      [_column.topAnchor constraintEqualToAnchor:_doc.topAnchor],
+      [_column.leadingAnchor constraintEqualToAnchor:_doc.leadingAnchor],
+      [_column.trailingAnchor constraintEqualToAnchor:_doc.trailingAnchor],
+      [_column.bottomAnchor constraintEqualToAnchor:_doc.bottomAnchor],
+    ]];
+    _scroll.documentView = _doc;
+
+    NSStackView* page   = _column;
     NSStackView* header = DCHeaderStack(
         @"Settings", [NSString stringWithUTF8String:ui::subtitle(ui::Module::Settings)]);
     [page addArrangedSubview:header];
@@ -377,13 +424,161 @@
     [page addArrangedSubview:dupMinCard];
     DCStackFullWidth(page, dupMinCard);
 
-    NSView* spacer = DCFlexibleSpace();
-    [page addArrangedSubview:spacer];
-    DCStackFullWidth(page, spacer);
+    NSView* accessCard = [self accessCard];
+    [page addArrangedSubview:accessCard];
+    DCStackFullWidth(page, accessCard);
 
     [self reloadFromDefaults];
   }
   return self;
+}
+
+- (NSView*)accessRowTitle:(NSString*)title detail:(NSString*)detail control:(NSView*)control
+{
+  NSTextField* t         = DCLabel(title);
+  t.font                 = [NSFont systemFontOfSize:13 weight:NSFontWeightSemibold];
+  NSTextField* d         = DCCaptionLabel(detail);
+  d.maximumNumberOfLines = 3;
+  d.lineBreakMode        = NSLineBreakByWordWrapping;
+  control.translatesAutoresizingMaskIntoConstraints = NO;
+  NSStackView* text = [NSStackView stackViewWithViews:@[ t, d ]];
+  text.orientation  = NSUserInterfaceLayoutOrientationVertical;
+  text.alignment    = NSLayoutAttributeLeading;
+  text.spacing      = 2;
+  NSView* gap = [[NSView alloc] initWithFrame:NSZeroRect];
+  [gap setContentHuggingPriority:1 forOrientation:NSLayoutConstraintOrientationHorizontal];
+  NSStackView* body = [NSStackView stackViewWithViews:@[ text, gap, control ]];
+  body.orientation  = NSUserInterfaceLayoutOrientationHorizontal;
+  body.alignment    = NSLayoutAttributeCenterY;
+  body.spacing      = 16;
+  [text setContentHuggingPriority:NSLayoutPriorityDefaultLow
+                   forOrientation:NSLayoutConstraintOrientationHorizontal];
+  [text setContentCompressionResistancePriority:NSLayoutPriorityDefaultLow
+                                 forOrientation:NSLayoutConstraintOrientationHorizontal];
+  [control setContentHuggingPriority:NSLayoutPriorityRequired
+                      forOrientation:NSLayoutConstraintOrientationHorizontal];
+  return body;
+}
+
+- (void)applyAccessButton:(NSButton*)button granted:(BOOL)granted
+{
+  button.title      = granted ? @"Revoke" : @"Request";
+  button.enabled    = YES;
+  button.bezelColor = nil;
+  DCSetSecondaryDestructive(button, granted);
+}
+
+- (NSView*)accessCard
+{
+  NSArray<NSString*>* titles = @[
+    @"Full Disk Access",
+    @"Desktop",
+    @"Documents",
+    @"Downloads",
+    @"Finder",
+  ];
+  NSArray<NSString*>* details = @[
+    @"Scan Mail, Messages, Safari, and other protected data.",
+    @"Scan the Desktop for large and duplicate files.",
+    @"Scan Documents for large and duplicate files.",
+    @"Scan Downloads for large and duplicate files.",
+    @"Ask Finder to count and empty Trash.",
+  ];
+  NSMutableArray<NSView*>* rows = [NSMutableArray array];
+  for (NSInteger kind = 0; kind < 5; ++kind)
+  {
+    NSButton* button = DCPushButton(@"Request", self, @selector(accessRequested:));
+    button.tag       = kind;
+    button.translatesAutoresizingMaskIntoConstraints = NO;
+    [button.widthAnchor constraintEqualToConstant:100].active = YES;
+    _accessButtons[kind] = button;
+    if (kind == DCAccessFullDisk)
+    {
+      [self applyAccessButton:button granted:DCAccessIsGranted(DCAccessFullDisk)];
+    }
+    [rows addObject:[self accessRowTitle:titles[kind] detail:details[kind] control:button]];
+  }
+
+  NSStackView* body = [NSStackView stackViewWithViews:rows];
+  body.orientation  = NSUserInterfaceLayoutOrientationVertical;
+  body.alignment    = NSLayoutAttributeLeading;
+  body.spacing      = 14;
+  body.edgeInsets   = NSEdgeInsetsMake(14, 14, 14, 14);
+  for (NSView* row in rows)
+  {
+    DCStackFullWidth(body, row);
+  }
+
+  NSVisualEffectView* card = [[NSVisualEffectView alloc] initWithFrame:NSZeroRect];
+  card.material            = NSVisualEffectMaterialContentBackground;
+  card.blendingMode        = NSVisualEffectBlendingModeWithinWindow;
+  card.state               = NSVisualEffectStateFollowsWindowActiveState;
+  card.wantsLayer          = YES;
+  card.layer.cornerRadius  = 10;
+  card.layer.masksToBounds = YES;
+  [card addSubview:body];
+  DCPinEdges(body, card);
+  return card;
+}
+
+- (void)refreshAccessButton:(NSInteger)kind
+{
+  NSButton* button = _accessButtons[kind];
+  if (button == nil)
+  {
+    return;
+  }
+  if (kind != DCAccessFullDisk && ![button.title isEqualToString:@"Revoke"])
+  {
+    return;
+  }
+  [self applyAccessButton:button granted:DCAccessIsGranted((DCAccessKind)kind)];
+}
+
+- (void)refreshAccessStatus
+{
+  if (_accessButtons[DCAccessFullDisk] == nil)
+  {
+    return;
+  }
+  for (NSInteger kind = 0; kind < 5; ++kind)
+  {
+    [self refreshAccessButton:kind];
+  }
+}
+
+- (void)accessRequested:(NSButton*)sender
+{
+  DCAccessKind kind = (DCAccessKind)sender.tag;
+  if ([sender.title isEqualToString:@"Revoke"])
+  {
+    DCOpenAccessSettings(kind);
+    return;
+  }
+  DCRequestAccess(kind);
+  [self applyAccessButton:sender granted:DCAccessIsGranted(kind)];
+}
+
+- (void)viewDidMoveToWindow
+{
+  [super viewDidMoveToWindow];
+  if (self.window != nil)
+  {
+    [self refreshAccessStatus];
+  }
+}
+
+- (void)layout
+{
+  [super layout];
+  CGFloat w = NSWidth(_scroll.contentView.bounds);
+  if (w < 1)
+  {
+    return;
+  }
+  [_column layoutSubtreeIfNeeded];
+  CGFloat h  = MAX(_column.fittingSize.height, 1);
+  _doc.frame = NSMakeRect(0, 0, w, h);
 }
 
 - (NSView*)cardTitle:(NSString*)title detail:(NSString*)detail control:(NSView*)control
