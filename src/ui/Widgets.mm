@@ -248,7 +248,7 @@ static NSBox* DCSeparatorRule(void)
 }
 
 @interface DCSeparatorCapsule : NSView
-@property(nonatomic) BOOL prominent;
+@property(nonatomic) DCPalette palette;
 @end
 
 @implementation DCSeparatorCapsule
@@ -270,16 +270,8 @@ static NSBox* DCSeparatorRule(void)
 
 - (void)updateLayer
 {
-  if (self.prominent)
-  {
-    self.layer.backgroundColor = NSColor.controlAccentColor.CGColor;
-  }
-  else
-  {
-    self.layer.backgroundColor =
-        [NSColor.controlAccentColor colorWithAlphaComponent:0.1].CGColor;
-  }
-  self.layer.cornerRadius = NSHeight(self.bounds) / 2;
+  self.layer.backgroundColor = DCPaletteFill(self.palette, NO, YES).CGColor;
+  self.layer.cornerRadius    = NSHeight(self.bounds) / 2;
 }
 
 - (void)layout
@@ -309,14 +301,13 @@ static NSFontWeight DCSeparatorFontWeight(DCLabelWeight weight)
 
 NSView* DCLabelSeparator(NSString* text,
                          DCLabelWeight weight,
-                         DCLabelStyle style,
+                         DCPalette palette,
                          DCLabelPosition position)
 {
-  BOOL prominent = style == DCLabelStyleProminent;
   NSFont* caption = [NSFont preferredFontForTextStyle:NSFontTextStyleCaption1 options:@{}];
   NSTextField* label = [NSTextField labelWithString:text ?: @""];
   label.font = [NSFont systemFontOfSize:caption.pointSize weight:DCSeparatorFontWeight(weight)];
-  label.textColor = prominent ? NSColor.whiteColor : NSColor.controlAccentColor;
+  label.textColor = DCPaletteTitle(palette, YES);
   label.lineBreakMode = NSLineBreakByTruncatingTail;
   label.maximumNumberOfLines = 1;
   label.translatesAutoresizingMaskIntoConstraints = NO;
@@ -326,7 +317,7 @@ NSView* DCLabelSeparator(NSString* text,
                           forOrientation:NSLayoutConstraintOrientationHorizontal];
 
   DCSeparatorCapsule* capsule = [[DCSeparatorCapsule alloc] initWithFrame:NSZeroRect];
-  capsule.prominent = prominent;
+  capsule.palette = palette;
   capsule.translatesAutoresizingMaskIntoConstraints = NO;
   [capsule addSubview:label];
   [NSLayoutConstraint activateConstraints:@[
@@ -372,64 +363,142 @@ static BOOL DCNativePillBezel(void)
 }
 
 @interface DCSystemPushButton : NSButton
-@property(nonatomic) BOOL secondaryDestructive;
+@property(nonatomic) DCPalette palette;
 @end
 
-static BOOL DCButtonIsSecondaryDestructive(NSButton* b)
+static NSColor* DCMonoColor(BOOL whiteInDark, CGFloat alpha)
 {
-  return [b isKindOfClass:[DCSystemPushButton class]] && ((DCSystemPushButton*)b).secondaryDestructive;
+  return [NSColor colorWithName:nil
+               dynamicProvider:^NSColor*(NSAppearance* appearance) {
+                 NSAppearanceName match = [appearance bestMatchFromAppearancesWithNames:@[
+                   NSAppearanceNameAqua, NSAppearanceNameDarkAqua
+                 ]];
+                 BOOL dark = [match isEqualToString:NSAppearanceNameDarkAqua];
+                 NSColor* base = (dark == whiteInDark) ? NSColor.whiteColor : NSColor.blackColor;
+                 if (alpha >= 1)
+                 {
+                   return base;
+                 }
+                 return [base colorWithAlphaComponent:alpha];
+               }];
 }
 
-static BOOL DCButtonIsProminent(NSButton* b)
+NSColor* DCPaletteFill(DCPalette palette, BOOL pressed, BOOL enabled)
 {
-  return b.bezelColor != nil || [b.keyEquivalent isEqualToString:@"\r"];
+  BOOL solid = palette == DCPalettePrimaryAccent || palette == DCPalettePrimaryDestructive ||
+               palette == DCPalettePrimaryDim;
+  if (palette == DCPalettePrimaryDim)
+  {
+    NSColor* fill = DCMonoColor(YES, 1);
+    if (!enabled)
+    {
+      return [fill colorWithSystemEffect:NSColorSystemEffectDisabled];
+    }
+    if (pressed)
+    {
+      return [fill colorWithSystemEffect:NSColorSystemEffectPressed];
+    }
+    return fill;
+  }
+  if (palette == DCPaletteSecondaryDim)
+  {
+    CGFloat alpha = 0.1;
+    if (!enabled)
+    {
+      alpha = 0.06;
+    }
+    else if (pressed)
+    {
+      alpha = 0.18;
+    }
+    return DCMonoColor(YES, alpha);
+  }
+
+  NSColor* base = (palette == DCPalettePrimaryDestructive || palette == DCPaletteSecondaryDestructive)
+                      ? NSColor.systemRedColor
+                      : NSColor.controlAccentColor;
+  if (!solid)
+  {
+    CGFloat alpha = 0.1;
+    if (!enabled)
+    {
+      base  = [base colorWithSystemEffect:NSColorSystemEffectDisabled];
+      alpha = 0.06;
+    }
+    else if (pressed)
+    {
+      alpha = 0.18;
+    }
+    return [base colorWithAlphaComponent:alpha];
+  }
+  if (!enabled)
+  {
+    return [base colorWithSystemEffect:NSColorSystemEffectDisabled];
+  }
+  if (pressed)
+  {
+    return [base colorWithSystemEffect:NSColorSystemEffectPressed];
+  }
+  return base;
 }
 
-static NSColor* DCTintedAccentFill(NSButton* b)
+NSColor* DCPaletteTitle(DCPalette palette, BOOL enabled)
 {
-  NSColor* accent = DCButtonIsSecondaryDestructive(b) ? NSColor.systemRedColor : NSColor.controlAccentColor;
-  CGFloat alpha   = 0.1;
-
-  if (!b.enabled)
+  NSColor* title = NSColor.controlAccentColor;
+  if (palette == DCPalettePrimaryAccent || palette == DCPalettePrimaryDestructive)
   {
-    accent = [accent colorWithSystemEffect:NSColorSystemEffectDisabled];
-    alpha  = 0.06;
+    title = NSColor.whiteColor;
   }
-  else if (b.cell.isHighlighted)
+  else if (palette == DCPalettePrimaryDim)
   {
-    alpha = 0.18;
+    title = DCMonoColor(NO, 1);
+  }
+  else if (palette == DCPaletteSecondaryDestructive)
+  {
+    title = NSColor.systemRedColor;
+  }
+  else if (palette == DCPaletteSecondaryDim)
+  {
+    title = DCMonoColor(YES, 1);
   }
 
-  return [accent colorWithAlphaComponent:alpha];
+  if (!enabled)
+  {
+    return [title colorWithSystemEffect:NSColorSystemEffectDisabled];
+  }
+  return title;
+}
+
+static DCPalette DCResolvedPalette(NSButton* b)
+{
+  if ([b isKindOfClass:[DCSystemPushButton class]])
+  {
+    return ((DCSystemPushButton*)b).palette;
+  }
+  if ([b.keyEquivalent isEqualToString:@"\r"])
+  {
+    return DCPalettePrimaryAccent;
+  }
+  return DCPaletteSecondaryAccent;
 }
 
 static NSColor* DCButtonCapsuleFill(NSButton* b)
 {
-  NSColor* fill = b.bezelColor;
-
-  if (!fill)
+  if (b.bezelColor != nil && ![b isKindOfClass:[DCSystemPushButton class]])
   {
-    if ([b.keyEquivalent isEqualToString:@"\r"])
+    NSColor* fill = b.bezelColor;
+    if (!b.enabled)
     {
-      fill = NSColor.controlAccentColor;
+      return [fill colorWithSystemEffect:NSColorSystemEffectDisabled];
     }
-    else
+    if (b.cell.isHighlighted)
     {
-      return DCTintedAccentFill(b);
+      return [fill colorWithSystemEffect:NSColorSystemEffectPressed];
     }
+    return fill;
   }
 
-  if (!b.enabled)
-  {
-    return [fill colorWithSystemEffect:NSColorSystemEffectDisabled];
-  }
-
-  if (b.cell.isHighlighted)
-  {
-    return [fill colorWithSystemEffect:NSColorSystemEffectPressed];
-  }
-
-  return fill;
+  return DCPaletteFill(DCResolvedPalette(b), b.cell.isHighlighted, b.enabled);
 }
 
 static void DCDrawCapsuleFill(NSButton* b)
@@ -455,19 +524,11 @@ static void DCApplyPlainButton(NSButton* b)
 
 static NSColor* DCButtonTitleColor(NSButton* b)
 {
-  if (DCButtonIsProminent(b))
+  if (b.bezelColor != nil && ![b isKindOfClass:[DCSystemPushButton class]])
   {
     return NSColor.whiteColor;
   }
-
-  NSColor* accent = DCButtonIsSecondaryDestructive(b) ? NSColor.systemRedColor : NSColor.controlAccentColor;
-
-  if (!b.enabled)
-  {
-    return [accent colorWithSystemEffect:NSColorSystemEffectDisabled];
-  }
-
-  return accent;
+  return DCPaletteTitle(DCResolvedPalette(b), b.enabled);
 }
 
 static void DCApplyCapsuleTitle(NSButton* b)
@@ -537,7 +598,8 @@ static NSSize DCCapsuleSize(NSSize titleSize, NSControlSize size)
 
 static NSButton* MakePush(NSString* title, id target, SEL action)
 {
-  NSButton* b = [DCSystemPushButton buttonWithTitle:title ?: @"" target:target action:action];
+  DCSystemPushButton* b = [DCSystemPushButton buttonWithTitle:title ?: @"" target:target action:action];
+  b.palette             = DCPaletteSecondaryAccent;
   DCApplyPlainButton(b);
   DCApplyCapsuleTitle(b);
 
@@ -551,8 +613,9 @@ NSButton* DCPushButton(NSString* title, id target, SEL action)
 
 NSButton* DCDefaultButton(NSString* title, id target, SEL action)
 {
-  NSButton* b     = MakePush(title, target, action);
-  b.keyEquivalent = @"\r";
+  DCSystemPushButton* b = (DCSystemPushButton*)MakePush(title, target, action);
+  b.palette             = DCPalettePrimaryAccent;
+  b.keyEquivalent       = @"\r";
 
   return b;
 }
@@ -892,11 +955,11 @@ void DCGlowButtonSetActive(NSButton* button, BOOL on)
   }
 }
 
-void DCSetSecondaryDestructive(NSButton* button, BOOL on)
+void DCSetButtonPalette(NSButton* button, DCPalette palette)
 {
   if ([button isKindOfClass:[DCSystemPushButton class]])
   {
-    ((DCSystemPushButton*)button).secondaryDestructive = on;
+    ((DCSystemPushButton*)button).palette = palette;
   }
   DCApplyCapsuleTitle(button);
   [button setNeedsDisplay:YES];
@@ -904,9 +967,9 @@ void DCSetSecondaryDestructive(NSButton* button, BOOL on)
 
 NSButton* DCDestructiveButton(NSString* title, id target, SEL action)
 {
-  NSButton* b            = MakePush(title, target, action);
+  DCSystemPushButton* b = (DCSystemPushButton*)MakePush(title, target, action);
   b.hasDestructiveAction = YES;
-  b.bezelColor           = NSColor.systemRedColor;
+  b.palette              = DCPalettePrimaryDestructive;
   DCApplyCapsuleTitle(b);
 
   return b;

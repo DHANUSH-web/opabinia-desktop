@@ -1028,8 +1028,8 @@ static const CGFloat kDevTabCapsule = 100;
 
 - (void)updateLayer
 {
-  self.layer.backgroundColor = [NSColor.controlAccentColor colorWithAlphaComponent:0.1].CGColor;
-  _selector.layer.backgroundColor = NSColor.controlAccentColor.CGColor;
+  self.layer.backgroundColor = DCPaletteFill(DCPaletteSecondaryAccent, NO, YES).CGColor;
+  _selector.layer.backgroundColor = DCPaletteFill(DCPalettePrimaryAccent, NO, YES).CGColor;
 }
 
 - (void)viewDidChangeEffectiveAppearance
@@ -1062,8 +1062,10 @@ static const CGFloat kDevTabCapsule = 100;
   NSFont* font = [NSFont systemFontOfSize:12 weight:NSFontWeightMedium];
   _apps.font   = font;
   _tools.font  = font;
-  _apps.contentTintColor  = _toolchain ? NSColor.controlAccentColor : NSColor.whiteColor;
-  _tools.contentTintColor = _toolchain ? NSColor.whiteColor : NSColor.controlAccentColor;
+  _apps.contentTintColor =
+      DCPaletteTitle(_toolchain ? DCPaletteSecondaryAccent : DCPalettePrimaryAccent, YES);
+  _tools.contentTintColor =
+      DCPaletteTitle(_toolchain ? DCPalettePrimaryAccent : DCPaletteSecondaryAccent, YES);
 }
 
 - (void)setToolchain:(BOOL)toolchain animated:(BOOL)animated

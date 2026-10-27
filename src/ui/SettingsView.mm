@@ -426,7 +426,7 @@
 
     NSView* permissionsRule = DCLabelSeparator(@"Permissions",
                                                DCLabelWeightNormal,
-                                               DCLabelStyleTinted,
+                                               DCPaletteSecondaryAccent,
                                                DCLabelPositionMiddle);
     [page addArrangedSubview:permissionsRule];
     DCStackFullWidth(page, permissionsRule);
@@ -472,7 +472,7 @@
   button.title      = granted ? @"Revoke" : @"Request";
   button.enabled    = YES;
   button.bezelColor = nil;
-  DCSetSecondaryDestructive(button, granted);
+  DCSetButtonPalette(button, granted ? DCPaletteSecondaryDestructive : DCPaletteSecondaryAccent);
 }
 
 - (NSView*)accessCard

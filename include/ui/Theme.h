@@ -32,26 +32,33 @@ typedef NS_ENUM(NSInteger, DCLabelWeight) {
   DCLabelWeightBold,
 };
 
-typedef NS_ENUM(NSInteger, DCLabelStyle) {
-  DCLabelStyleTinted = 0,
-  DCLabelStyleProminent,
-};
-
 typedef NS_ENUM(NSInteger, DCLabelPosition) {
   DCLabelPositionLeft = 0,
   DCLabelPositionMiddle,
   DCLabelPositionRight,
 };
 
+typedef NS_ENUM(NSInteger, DCPalette) {
+  DCPalettePrimaryAccent = 0,
+  DCPaletteSecondaryAccent,
+  DCPalettePrimaryDestructive,
+  DCPaletteSecondaryDestructive,
+  DCPalettePrimaryDim,
+  DCPaletteSecondaryDim,
+};
+
+NSColor* DCPaletteFill(DCPalette palette, BOOL pressed, BOOL enabled);
+NSColor* DCPaletteTitle(DCPalette palette, BOOL enabled);
+
 NSView* DCLabelSeparator(NSString* text,
                          DCLabelWeight weight,
-                         DCLabelStyle style,
+                         DCPalette palette,
                          DCLabelPosition position);
 
 NSButton* DCPushButton(NSString* title, id target, SEL action);
 NSButton* DCDefaultButton(NSString* title, id target, SEL action);
 NSButton* DCDestructiveButton(NSString* title, id target, SEL action);
-void DCSetSecondaryDestructive(NSButton* button, BOOL on);
+void DCSetButtonPalette(NSButton* button, DCPalette palette);
 
 /// Plain button with a capsule fill and a traveling glow. Callers pass title, action,
 /// glow color, stroke width, and orbit direction. Face, title, and border colors
