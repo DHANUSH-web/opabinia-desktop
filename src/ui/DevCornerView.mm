@@ -1,6 +1,8 @@
 #import "ui/DevCornerView.h"
 #import "ui/Theme.h"
 
+#import <QuartzCore/QuartzCore.h>
+
 #include "dcmm/mac/vscode.hpp"
 #include "dcmm/mac/antigravity.hpp"
 #include "dcmm/mac/cursor.hpp"
@@ -942,6 +944,142 @@ static NSURL* DCDevRepoURL(NSString* s)
 
 @end
 
+@interface DCDevTabSlot : NSView
+- (instancetype)initWithTarget:(id)target appsAction:(SEL)appsAction toolsAction:(SEL)toolsAction;
+- (void)setToolchain:(BOOL)toolchain animated:(BOOL)animated;
+@end
+
+@implementation DCDevTabSlot
+{
+  NSView* _selector;
+  NSButton* _apps;
+  NSButton* _tools;
+  NSLayoutConstraint* _selectorLeading;
+  BOOL _toolchain;
+  BOOL _animating;
+}
+
+- (instancetype)initWithTarget:(id)target appsAction:(SEL)appsAction toolsAction:(SEL)toolsAction
+{
+  self = [super initWithFrame:NSZeroRect];
+  if (self)
+  {
+    self.wantsLayer          = YES;
+    self.layer.masksToBounds = YES;
+
+    _selector                 = [[NSView alloc] initWithFrame:NSZeroRect];
+    _selector.wantsLayer      = YES;
+    _selector.translatesAutoresizingMaskIntoConstraints = NO;
+
+    _apps = [NSButton buttonWithTitle:@"Applications" target:target action:appsAction];
+    _tools = [NSButton buttonWithTitle:@"Toolchains" target:target action:toolsAction];
+    _apps.bordered  = NO;
+    _tools.bordered = NO;
+    _apps.translatesAutoresizingMaskIntoConstraints  = NO;
+    _tools.translatesAutoresizingMaskIntoConstraints = NO;
+
+    [self addSubview:_selector];
+    [self addSubview:_apps];
+    [self addSubview:_tools];
+
+    _selectorLeading = [_selector.leadingAnchor constraintEqualToAnchor:self.leadingAnchor constant:3];
+    [NSLayoutConstraint activateConstraints:@[
+      [self.heightAnchor constraintEqualToConstant:36],
+      [_apps.leadingAnchor constraintEqualToAnchor:self.leadingAnchor],
+      [_apps.topAnchor constraintEqualToAnchor:self.topAnchor],
+      [_apps.bottomAnchor constraintEqualToAnchor:self.bottomAnchor],
+      [_tools.leadingAnchor constraintEqualToAnchor:_apps.trailingAnchor],
+      [_tools.trailingAnchor constraintEqualToAnchor:self.trailingAnchor],
+      [_tools.topAnchor constraintEqualToAnchor:self.topAnchor],
+      [_tools.bottomAnchor constraintEqualToAnchor:self.bottomAnchor],
+      [_apps.widthAnchor constraintEqualToAnchor:_tools.widthAnchor],
+      [_apps.widthAnchor constraintGreaterThanOrEqualToConstant:132],
+      _selectorLeading,
+      [_selector.centerYAnchor constraintEqualToAnchor:self.centerYAnchor],
+      [_selector.heightAnchor constraintEqualToAnchor:self.heightAnchor constant:-6],
+      [_selector.widthAnchor constraintEqualToAnchor:self.widthAnchor multiplier:0.5 constant:-6],
+    ]];
+    [self applyTitles];
+  }
+  return self;
+}
+
+- (BOOL)wantsUpdateLayer
+{
+  return YES;
+}
+
+- (void)updateLayer
+{
+  self.layer.backgroundColor = [NSColor.controlAccentColor colorWithAlphaComponent:0.2].CGColor;
+  _selector.layer.backgroundColor = NSColor.controlAccentColor.CGColor;
+}
+
+- (void)viewDidChangeEffectiveAppearance
+{
+  [super viewDidChangeEffectiveAppearance];
+  [self applyTitles];
+}
+
+- (void)layout
+{
+  [super layout];
+  self.layer.cornerRadius = NSHeight(self.bounds) / 2;
+  _selector.layer.cornerRadius = NSHeight(_selector.bounds) / 2;
+
+  if (!_animating)
+  {
+    _selectorLeading.constant = [self selectorConstant];
+  }
+}
+
+- (CGFloat)selectorConstant
+{
+  if (_toolchain)
+  {
+    return NSWidth(self.bounds) / 2 + 3;
+  }
+  return 3;
+}
+
+- (void)applyTitles
+{
+  NSFont* on  = [NSFont systemFontOfSize:13 weight:NSFontWeightSemibold];
+  NSFont* off = [NSFont systemFontOfSize:13 weight:NSFontWeightMedium];
+  _apps.font            = _toolchain ? off : on;
+  _tools.font           = _toolchain ? on : off;
+  _apps.contentTintColor  = _toolchain ? NSColor.controlAccentColor : NSColor.whiteColor;
+  _tools.contentTintColor = _toolchain ? NSColor.whiteColor : NSColor.controlAccentColor;
+}
+
+- (void)setToolchain:(BOOL)toolchain animated:(BOOL)animated
+{
+  _toolchain = toolchain;
+  [self applyTitles];
+
+  CGFloat constant = [self selectorConstant];
+  if (!animated || NSWidth(self.bounds) < 1)
+  {
+    _selectorLeading.constant = constant;
+    return;
+  }
+
+  _animating = YES;
+  [NSAnimationContext runAnimationGroup:^(NSAnimationContext* context) {
+    context.duration                = 0.32;
+    context.allowsImplicitAnimation = YES;
+    context.timingFunction =
+        [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut];
+    self->_selectorLeading.animator.constant = constant;
+  }
+      completionHandler:^{
+        self->_animating = NO;
+        self->_selectorLeading.constant = [self selectorConstant];
+      }];
+}
+
+@end
+
 @implementation DCDevCornerView
 {
   dcmm::Engine _engine;
@@ -960,7 +1098,8 @@ static NSURL* DCDevRepoURL(NSString* s)
   BOOL _scanning;
   BOOL _uninstalling;
   NSStackView* _actions;
-  NSSegmentedControl* _tabs;
+  DCDevTabSlot* _tabs;
+  BOOL _toolchain;
   NSView* _appsWrap;
   NSView* _tcWrap;
   DCStartScreen* _startScreen;
@@ -1079,27 +1218,9 @@ static NSURL* DCDevRepoURL(NSString* s)
     DCPinEdges(_startScreen, body);
     _scanApps.keyEquivalent = @"";
 
-    _tabs                 = [NSSegmentedControl
-        segmentedControlWithLabels:@[ @"Applications", @"Toolchains" ]
-                      trackingMode:NSSegmentSwitchTrackingSelectOne
-                            target:self
-                            action:@selector(tabChanged:)];
-    _tabs.segmentStyle    = NSSegmentStyleAutomatic;
-    _tabs.controlSize     = NSControlSizeLarge;
-#if __MAC_OS_X_VERSION_MAX_ALLOWED >= 260000
-    if (@available(macOS 26, *))
-    {
-      _tabs.borderShape = NSControlBorderShapeCapsule;
-    }
-#endif
-#if __MAC_OS_X_VERSION_MAX_ALLOWED >= 270000
-    if (@available(macOS 27, *))
-    {
-      _tabs.role = NSSegmentedControlRoleTabs;
-    }
-#endif
-
-    _tabs.selectedSegment = 0;
+    _tabs = [[DCDevTabSlot alloc] initWithTarget:self
+                                    appsAction:@selector(showApplications:)
+                                   toolsAction:@selector(showToolchains:)];
     DCStackCentered(page, _tabs);
     DCStackExpand(page, body);
     [page addArrangedSubview:_actions];
@@ -1135,17 +1256,36 @@ static NSURL* DCDevRepoURL(NSString* s)
 
 - (BOOL)applicationTabSelected
 {
-  return _tabs.selectedSegment == 0;
+  return !_toolchain;
 }
 
 - (BOOL)toolchainTabSelected
 {
-  return _tabs.selectedSegment == 1;
+  return _toolchain;
 }
 
-- (void)tabChanged:(NSSegmentedControl*)sender
+- (void)selectToolchain:(BOOL)toolchain
+{
+  _toolchain = toolchain;
+  [_tabs setToolchain:toolchain animated:self.window != nil];
+}
+
+- (void)showApplications:(NSButton*)sender
 {
   (void)sender;
+  [self selectToolchain:NO];
+  [self applyTab];
+}
+
+- (void)showToolchains:(NSButton*)sender
+{
+  (void)sender;
+  [self selectToolchain:YES];
+  [self applyTab];
+}
+
+- (void)applyTab
+{
   if ([self toolchainTabSelected])
   {
     _scanApps.title = @"Scan Toolchains";
