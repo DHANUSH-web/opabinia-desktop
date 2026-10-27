@@ -78,9 +78,25 @@ ConfirmCopy ConfirmForTask(const std::string& id, const dcmm::MaintenanceTask& t
   NSMutableArray<DCGlowButton*>* _runButtons;
 }
 
-- (NSView*)cardForTask:(const dcmm::MaintenanceTask&)task index:(NSInteger)index
+- (DCGlowButton*)executeButton:(SEL)action
 {
-  NSTextField* title         = DCLabel(DCNS(task.title));
+  DCGlowButton* run = [DCGlowButton buttonWithTitle:@"Execute"
+                                             target:self
+                                             action:action
+                                          glowColor:NSColor.controlAccentColor
+                                      glowLineWidth:2.5
+                                          clockwise:YES];
+  [run setContentHuggingPriority:NSLayoutPriorityRequired
+                  forOrientation:NSLayoutConstraintOrientationHorizontal];
+  [run setContentCompressionResistancePriority:NSLayoutPriorityRequired
+                                forOrientation:NSLayoutConstraintOrientationHorizontal];
+
+  return run;
+}
+
+- (NSView*)cardWithTitle:(NSString*)titleText subtitle:(NSString*)subtitleText button:(NSButton*)button
+{
+  NSTextField* title         = DCLabel(titleText ?: @"");
   title.font                 = [NSFont systemFontOfSize:15 weight:NSFontWeightSemibold];
   title.maximumNumberOfLines = 1;
   [title setContentHuggingPriority:NSLayoutPriorityDefaultLow
@@ -88,7 +104,7 @@ ConfirmCopy ConfirmForTask(const std::string& id, const dcmm::MaintenanceTask& t
   [title setContentCompressionResistancePriority:NSLayoutPriorityDefaultLow
                                   forOrientation:NSLayoutConstraintOrientationHorizontal];
 
-  NSTextField* subtitle = DCSecondaryLabel(DCNS(task.detail));
+  NSTextField* subtitle = DCSecondaryLabel(subtitleText ?: @"");
   subtitle.font         = [NSFont preferredFontForTextStyle:NSFontTextStyleSubheadline options:@{}];
   subtitle.maximumNumberOfLines = 0;
   [subtitle setContentHuggingPriority:NSLayoutPriorityDefaultLow
@@ -104,25 +120,12 @@ ConfirmCopy ConfirmForTask(const std::string& id, const dcmm::MaintenanceTask& t
   [text setContentCompressionResistancePriority:1
                                  forOrientation:NSLayoutConstraintOrientationHorizontal];
 
-  DCGlowButton* run = [DCGlowButton buttonWithTitle:@"Execute"
-                                             target:self
-                                             action:@selector(runTask:)
-                                          glowColor:NSColor.controlAccentColor
-                                      glowLineWidth:2.5
-                                          clockwise:YES];
-  run.tag           = index;
-  [run setContentHuggingPriority:NSLayoutPriorityRequired
-                  forOrientation:NSLayoutConstraintOrientationHorizontal];
-  [run setContentCompressionResistancePriority:NSLayoutPriorityRequired
-                                forOrientation:NSLayoutConstraintOrientationHorizontal];
-  [_runButtons addObject:run];
-
   NSView* spacer = [[NSView alloc] initWithFrame:NSZeroRect];
   [spacer setContentHuggingPriority:1 forOrientation:NSLayoutConstraintOrientationHorizontal];
   [spacer setContentCompressionResistancePriority:1
                                    forOrientation:NSLayoutConstraintOrientationHorizontal];
 
-  NSStackView* body = [NSStackView stackViewWithViews:@[ text, spacer, run ]];
+  NSStackView* body = [NSStackView stackViewWithViews:@[ text, spacer, button ]];
   body.orientation  = NSUserInterfaceLayoutOrientationHorizontal;
   body.alignment    = NSLayoutAttributeCenterY;
   body.spacing      = 16;
@@ -140,6 +143,37 @@ ConfirmCopy ConfirmForTask(const std::string& id, const dcmm::MaintenanceTask& t
   [card setContentHuggingPriority:NSLayoutPriorityRequired
                    forOrientation:NSLayoutConstraintOrientationVertical];
   return card;
+}
+
+- (NSView*)cardForTask:(const dcmm::MaintenanceTask&)task index:(NSInteger)index
+{
+  DCGlowButton* run = [self executeButton:@selector(runTask:)];
+  run.tag           = index;
+  [_runButtons addObject:run];
+
+  return [self cardWithTitle:DCNS(task.title) subtitle:DCNS(task.detail) button:run];
+}
+
+- (NSView*)helioCard
+{
+  return [self cardWithTitle:@"Manage and monitor resources"
+                    subtitle:@"Advanced native resource monitor for the macOS"
+                      button:[self executeButton:@selector(openHelio:)]];
+}
+
+- (void)openHelio:(NSButton*)sender
+{
+  (void)sender;
+  NSWorkspace* workspace = NSWorkspace.sharedWorkspace;
+  NSString* appPath      = @"/Applications/Helio.app";
+
+  if ([NSFileManager.defaultManager fileExistsAtPath:appPath])
+  {
+    [workspace openURL:[NSURL fileURLWithPath:appPath]];
+    return;
+  }
+
+  [workspace openURL:[NSURL URLWithString:@"https://helio.dhanushhv.com"]];
 }
 
 - (instancetype)initWithFrame:(NSRect)frame
@@ -161,6 +195,7 @@ ConfirmCopy ConfirmForTask(const std::string& id, const dcmm::MaintenanceTask& t
     {
       [cards addObject:[self cardForTask:tasks[i] index:(NSInteger)i]];
     }
+    [cards addObject:[self helioCard]];
 
     NSStackView* list = [NSStackView stackViewWithViews:cards];
     list.orientation  = NSUserInterfaceLayoutOrientationVertical;
