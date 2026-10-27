@@ -225,6 +225,190 @@
 
 @end
 
+@interface DCCapsulePopUpCell : NSPopUpButtonCell
+@end
+
+@implementation DCCapsulePopUpCell
+
+- (NSRect)titleRectForBounds:(NSRect)bounds
+{
+  NSRect title = [super titleRectForBounds:bounds];
+  CGFloat inset = 16;
+  title.origin.x   = inset;
+  title.size.width = MAX(NSWidth(bounds) - inset * 2, 0);
+  return title;
+}
+
+- (void)drawBezelWithFrame:(NSRect)frame inView:(NSView*)controlView
+{
+  (void)frame;
+  (void)controlView;
+}
+
+@end
+
+@interface DCCapsulePopUpButton : NSPopUpButton
+@end
+
+@implementation DCCapsulePopUpButton
+{
+  NSPopover* _menuPopover;
+}
+
++ (Class)cellClass
+{
+  return [DCCapsulePopUpCell class];
+}
+
+- (instancetype)initWithFrame:(NSRect)frame pullsDown:(BOOL)flag
+{
+  self = [super initWithFrame:frame pullsDown:flag];
+  if (self)
+  {
+    self.bordered    = NO;
+    self.controlSize = NSControlSizeRegular;
+    NSMenu* menu     = self.menu;
+    DCCapsulePopUpCell* cell = [[DCCapsulePopUpCell alloc] initTextCell:@"" pullsDown:flag];
+    self.cell                = cell;
+    self.menu                = menu;
+    self.alignment           = NSTextAlignmentCenter;
+    [self applyCapsuleTitle];
+  }
+  return self;
+}
+
+- (void)applyCapsuleTitle
+{
+  self.contentTintColor = DCPaletteTitle(DCPaletteSecondaryDim, self.enabled);
+}
+
+- (void)setTitle:(NSString*)title
+{
+  [super setTitle:title];
+  [self applyCapsuleTitle];
+}
+
+- (void)viewDidChangeEffectiveAppearance
+{
+  [super viewDidChangeEffectiveAppearance];
+  [self applyCapsuleTitle];
+  [self setNeedsDisplay:YES];
+}
+
+- (void)drawRect:(NSRect)dirtyRect
+{
+  (void)dirtyRect;
+  NSRect bounds = self.bounds;
+  if (NSWidth(bounds) > 1 && NSHeight(bounds) > 1)
+  {
+    CGFloat radius     = MIN(NSWidth(bounds), NSHeight(bounds)) / 2;
+    NSBezierPath* path = [NSBezierPath bezierPathWithRoundedRect:bounds xRadius:radius yRadius:radius];
+    [DCPaletteFill(DCPaletteSecondaryDim, self.cell.isHighlighted, self.enabled) setFill];
+    [path fill];
+  }
+
+  NSString* title = self.titleOfSelectedItem ?: @"";
+  NSFont* font    = self.font ?: [NSFont systemFontOfSize:13];
+  NSColor* color  = DCPaletteTitle(DCPaletteSecondaryDim, self.enabled);
+  NSDictionary* attrs = @{
+    NSFontAttributeName : font,
+    NSForegroundColorAttributeName : color
+  };
+  NSSize textSize = [title sizeWithAttributes:attrs];
+  NSImageSymbolConfiguration* symbolConfig =
+      [NSImageSymbolConfiguration configurationWithPointSize:10 weight:NSFontWeightSemibold];
+  NSImageSymbolConfiguration* tint =
+      [NSImageSymbolConfiguration configurationWithPaletteColors:@[ color ]];
+  NSImage* chevron = [[NSImage imageWithSystemSymbolName:@"chevron.down" accessibilityDescription:nil]
+      imageWithSymbolConfiguration:[symbolConfig configurationByApplyingConfiguration:tint]];
+  CGFloat gap       = 6;
+  CGFloat chevronW  = 11;
+  CGFloat chevronH  = 8;
+  CGFloat total     = textSize.width + gap + chevronW;
+  CGFloat x         = (NSWidth(bounds) - total) / 2;
+  NSRect textRect   = NSMakeRect(x, (NSHeight(bounds) - textSize.height) / 2, textSize.width, textSize.height);
+  [title drawInRect:textRect withAttributes:attrs];
+  if (chevron != nil)
+  {
+    NSRect chevronRect = NSMakeRect(NSMaxX(textRect) + gap, (NSHeight(bounds) - chevronH) / 2, chevronW, chevronH);
+    [chevron drawInRect:chevronRect];
+  }
+}
+
+- (NSSize)intrinsicContentSize
+{
+  NSSize size = [super intrinsicContentSize];
+  size.width += 8;
+  size.height = MAX(size.height + 8, 28);
+  return size;
+}
+
+- (void)chooseCleaning:(NSButton*)sender
+{
+  [self selectItemAtIndex:sender.tag];
+  [self applyCapsuleTitle];
+  [NSApp sendAction:self.action to:self.target from:self];
+  [_menuPopover performClose:nil];
+  _menuPopover = nil;
+}
+
+- (void)mouseDown:(NSEvent*)event
+{
+  (void)event;
+  if (_menuPopover.shown)
+  {
+    [_menuPopover performClose:nil];
+    _menuPopover = nil;
+    return;
+  }
+
+  NSMutableArray<NSButton*>* choices = [NSMutableArray array];
+  for (NSInteger i = 0; i < self.numberOfItems; ++i)
+  {
+    NSString* title  = [self itemTitleAtIndex:i];
+    NSButton* choice = nil;
+    if (i == self.indexOfSelectedItem)
+    {
+      choice = DCPushButton(title, self, @selector(chooseCleaning:));
+      DCSetButtonPalette(choice, DCPalettePrimaryAccent);
+    }
+    else
+    {
+      choice           = [NSButton buttonWithTitle:title target:self action:@selector(chooseCleaning:)];
+      choice.bordered = NO;
+      choice.font     = [NSFont systemFontOfSize:13 weight:NSFontWeightMedium];
+    }
+    choice.tag = i;
+    choice.translatesAutoresizingMaskIntoConstraints = NO;
+    [choice.heightAnchor constraintEqualToConstant:28].active = YES;
+    [choices addObject:choice];
+  }
+
+  NSStackView* stack = [NSStackView stackViewWithViews:choices];
+  stack.orientation  = NSUserInterfaceLayoutOrientationVertical;
+  stack.alignment    = NSLayoutAttributeLeading;
+  stack.spacing      = 6;
+  stack.edgeInsets   = NSEdgeInsetsMake(8, 8, 8, 8);
+  CGFloat width      = MAX(NSWidth(self.bounds), 180);
+  [stack.widthAnchor constraintEqualToConstant:width].active = YES;
+  for (NSButton* choice in choices)
+  {
+    DCStackFullWidth(stack, choice);
+  }
+  [stack layoutSubtreeIfNeeded];
+
+  NSViewController* controller = [[NSViewController alloc] init];
+  controller.view              = stack;
+  _menuPopover                 = [[NSPopover alloc] init];
+  _menuPopover.behavior        = NSPopoverBehaviorTransient;
+  _menuPopover.animates        = YES;
+  _menuPopover.contentViewController = controller;
+  _menuPopover.contentSize     = stack.fittingSize;
+  [_menuPopover showRelativeToRect:self.bounds ofView:self preferredEdge:NSRectEdgeMaxY];
+}
+
+@end
+
 @interface DCSettingsView () <NSTextFieldDelegate>
 @end
 
@@ -340,7 +524,7 @@
     [page addArrangedSubview:appearanceCard];
     DCStackFullWidth(page, appearanceCard);
 
-    _cleaning = [[NSPopUpButton alloc] initWithFrame:NSZeroRect pullsDown:NO];
+    _cleaning = [[DCCapsulePopUpButton alloc] initWithFrame:NSZeroRect pullsDown:NO];
     [_cleaning addItemsWithTitles:@[ @"Move to Trash", @"Delete Permanently" ]];
     _cleaning.target     = self;
     _cleaning.action     = @selector(cleaningChanged:);
