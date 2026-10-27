@@ -29,7 +29,7 @@ NSButton* DCPushButton(NSString* title, id target, SEL action);
 NSButton* DCDefaultButton(NSString* title, id target, SEL action);
 NSButton* DCDestructiveButton(NSString* title, id target, SEL action);
 
-/// Push button with a traveling glow along the bezel. Callers pass title, action,
+/// Plain button with a capsule fill and a traveling glow. Callers pass title, action,
 /// glow color, stroke width, and orbit direction. Face, title, and border colors
 /// are properties, as are the other layout knobs.
 @interface DCGlowButton : NSButton

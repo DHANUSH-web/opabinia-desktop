@@ -231,60 +231,173 @@ NSTextField* DCTitleLabel(NSString* text)
   return t;
 }
 
-static void DCApplySystemPushBezel(NSButton* b)
-{
-  if (@available(macOS 26.0, *))
-  {
-    b.bezelStyle = NSBezelStyleGlass;
-  }
-  else if (@available(macOS 14.0, *))
-  {
-    b.bezelStyle = NSBezelStyleAutomatic;
-  }
-  else
-  {
-    b.bezelStyle = NSBezelStylePush;
-  }
-}
-
 static BOOL DCNativePillBezel(void)
 {
-  if (@available(macOS 26.0, *))
-  {
-    return YES;
-  }
-
-  return NO;
+  return YES;
 }
 
-// AppKit Glass on 26+ is not a capsule. Clip the native bezel to a pill on 26+ only.
-static void DCClipToCapsuleOn26(NSButton* b)
+static BOOL DCButtonIsProminent(NSButton* b)
 {
-  if (@available(macOS 26.0, *))
+  return b.bezelColor != nil || [b.keyEquivalent isEqualToString:@"\r"];
+}
+
+static NSColor* DCTintedAccentFill(NSButton* b)
+{
+  NSColor* accent = NSColor.controlAccentColor;
+  CGFloat alpha   = 0.2;
+
+  if (!b.enabled)
   {
-    b.wantsLayer          = YES;
-    CGFloat r             = NSHeight(b.bounds) / 2;
-    b.layer.cornerRadius  = r;
-    b.layer.cornerCurve   = kCACornerCurveContinuous;
-    b.layer.masksToBounds = YES;
+    accent = [accent colorWithSystemEffect:NSColorSystemEffectDisabled];
+    alpha  = 0.12;
   }
+  else if (b.cell.isHighlighted)
+  {
+    alpha = 0.34;
+  }
+
+  return [accent colorWithAlphaComponent:alpha];
+}
+
+static NSColor* DCButtonCapsuleFill(NSButton* b)
+{
+  NSColor* fill = b.bezelColor;
+
+  if (!fill)
+  {
+    if ([b.keyEquivalent isEqualToString:@"\r"])
+    {
+      fill = NSColor.controlAccentColor;
+    }
+    else
+    {
+      return DCTintedAccentFill(b);
+    }
+  }
+
+  if (!b.enabled)
+  {
+    return [fill colorWithSystemEffect:NSColorSystemEffectDisabled];
+  }
+
+  if (b.cell.isHighlighted)
+  {
+    return [fill colorWithSystemEffect:NSColorSystemEffectPressed];
+  }
+
+  return fill;
+}
+
+static void DCDrawCapsuleFill(NSButton* b)
+{
+  NSRect bounds = b.bounds;
+
+  if (NSWidth(bounds) < 1 || NSHeight(bounds) < 1)
+  {
+    return;
+  }
+
+  CGFloat radius    = MIN(NSWidth(bounds), NSHeight(bounds)) / 2;
+  NSBezierPath* path = [NSBezierPath bezierPathWithRoundedRect:bounds xRadius:radius yRadius:radius];
+  [DCButtonCapsuleFill(b) setFill];
+  [path fill];
+}
+
+static void DCApplyPlainButton(NSButton* b)
+{
+  b.bordered    = NO;
+  b.controlSize = NSControlSizeRegular;
+}
+
+static NSColor* DCButtonTitleColor(NSButton* b)
+{
+  if (DCButtonIsProminent(b))
+  {
+    return NSColor.whiteColor;
+  }
+
+  NSColor* accent = NSColor.controlAccentColor;
+
+  if (!b.enabled)
+  {
+    return [accent colorWithSystemEffect:NSColorSystemEffectDisabled];
+  }
+
+  return accent;
+}
+
+static void DCApplyCapsuleTitle(NSButton* b)
+{
+  NSColor* title     = DCButtonTitleColor(b);
+  b.contentTintColor = title;
+
+  if ([b isKindOfClass:[DCGlowButton class]])
+  {
+    ((DCGlowButton*)b).titleColor = title;
+  }
+}
+
+static NSSize DCCapsuleSize(NSSize titleSize, NSControlSize size)
+{
+  CGFloat minH = 28;
+
+  if (size == NSControlSizeLarge)
+  {
+    minH = 32;
+  }
+  else if (size == NSControlSizeSmall)
+  {
+    minH = 22;
+  }
+  else if (size == NSControlSizeMini)
+  {
+    minH = 16;
+  }
+
+  titleSize.width += 28;
+  titleSize.height = MAX(titleSize.height + 8, minH);
+
+  return titleSize;
 }
 
 @interface DCSystemPushButton : NSButton
 @end
 @implementation DCSystemPushButton
-- (void)layout
+- (void)drawRect:(NSRect)dirtyRect
 {
-  [super layout];
-  DCClipToCapsuleOn26(self);
+  DCDrawCapsuleFill(self);
+  [super drawRect:dirtyRect];
+}
+
+- (void)setKeyEquivalent:(NSString*)keyEquivalent
+{
+  [super setKeyEquivalent:keyEquivalent];
+  DCApplyCapsuleTitle(self);
+}
+
+- (void)setEnabled:(BOOL)enabled
+{
+  [super setEnabled:enabled];
+  [self setNeedsDisplay:YES];
+}
+
+- (NSSize)intrinsicContentSize
+{
+  return DCCapsuleSize([super intrinsicContentSize], self.controlSize);
+}
+
+- (void)viewDidChangeEffectiveAppearance
+{
+  [super viewDidChangeEffectiveAppearance];
+  DCApplyCapsuleTitle(self);
 }
 @end
 
 static NSButton* MakePush(NSString* title, id target, SEL action)
 {
   NSButton* b = [DCSystemPushButton buttonWithTitle:title ?: @"" target:target action:action];
-  DCApplySystemPushBezel(b);
-  b.controlSize = NSControlSizeRegular;
+  DCApplyPlainButton(b);
+  DCApplyCapsuleTitle(b);
 
   return b;
 }
@@ -326,8 +439,8 @@ NSButton* DCDefaultButton(NSString* title, id target, SEL action)
                       clockwise:(BOOL)clockwise
 {
   DCGlowButton* b = [DCGlowButton buttonWithTitle:title ?: @"" target:target action:action];
-  DCApplySystemPushBezel(b);
-  b.controlSize      = NSControlSizeRegular;
+  DCApplyPlainButton(b);
+  DCApplyCapsuleTitle(b);
   b.glowColor        = glowColor;
   b.glowLineWidth    = glowLineWidth;
   b.clockwise        = clockwise;
@@ -382,6 +495,13 @@ NSButton* DCDefaultButton(NSString* title, id target, SEL action)
 - (void)setTitleColor:(NSColor*)titleColor
 {
   _titleColor = titleColor;
+
+  if (!titleColor)
+  {
+    self.attributedTitle = [[NSAttributedString alloc] initWithString:self.title ?: @""];
+    return;
+  }
+
   [self applyTitleColor];
 }
 
@@ -389,6 +509,8 @@ NSButton* DCDefaultButton(NSString* title, id target, SEL action)
 {
   _buttonColor    = buttonColor;
   self.bezelColor = buttonColor;
+  DCApplyCapsuleTitle(self);
+  [self setNeedsDisplay:YES];
 }
 
 - (void)setBorderColor:(NSColor*)borderColor
@@ -457,10 +579,38 @@ NSButton* DCDefaultButton(NSString* title, id target, SEL action)
   return b;
 }
 
+- (void)drawRect:(NSRect)dirtyRect
+{
+  DCDrawCapsuleFill(self);
+  [super drawRect:dirtyRect];
+}
+
+- (void)setKeyEquivalent:(NSString*)keyEquivalent
+{
+  [super setKeyEquivalent:keyEquivalent];
+  DCApplyCapsuleTitle(self);
+}
+
+- (void)setEnabled:(BOOL)enabled
+{
+  [super setEnabled:enabled];
+  [self setNeedsDisplay:YES];
+}
+
+- (NSSize)intrinsicContentSize
+{
+  return DCCapsuleSize([super intrinsicContentSize], self.controlSize);
+}
+
+- (void)viewDidChangeEffectiveAppearance
+{
+  [super viewDidChangeEffectiveAppearance];
+  DCApplyCapsuleTitle(self);
+}
+
 - (void)layout
 {
   [super layout];
-  DCClipToCapsuleOn26(self);
 
   if (_fullyRounded)
   {
@@ -605,6 +755,7 @@ NSButton* DCDestructiveButton(NSString* title, id target, SEL action)
   NSButton* b            = MakePush(title, target, action);
   b.hasDestructiveAction = YES;
   b.bezelColor           = NSColor.systemRedColor;
+  DCApplyCapsuleTitle(b);
 
   return b;
 }
