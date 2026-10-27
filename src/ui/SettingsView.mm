@@ -280,9 +280,16 @@
     ]];
     _scroll.documentView = _doc;
 
-    NSStackView* page   = _column;
-    NSStackView* header = DCHeaderStack(
-        @"Settings", [NSString stringWithUTF8String:ui::subtitle(ui::Module::Settings)]);
+    NSStackView* page = _column;
+    NSTextField* title = DCTitleLabel(@"Settings");
+    NSTextField* subtitle =
+        DCSecondaryLabel([NSString stringWithUTF8String:ui::subtitle(ui::Module::Settings)]);
+    NSStackView* header = [NSStackView stackViewWithViews:@[ title, subtitle ]];
+    header.orientation  = NSUserInterfaceLayoutOrientationVertical;
+    header.alignment    = NSLayoutAttributeLeading;
+    header.spacing      = 10;
+    [header setContentHuggingPriority:NSLayoutPriorityRequired
+                       forOrientation:NSLayoutConstraintOrientationVertical];
     [page addArrangedSubview:header];
     DCStackFullWidth(page, header);
 
@@ -324,6 +331,12 @@
     appearanceCard.layer.masksToBounds = YES;
     [appearanceCard addSubview:themeBody];
     DCPinEdges(themeBody, appearanceCard);
+    NSView* generalRule = DCLabelSeparator(@"General",
+                                           DCLabelWeightNormal,
+                                           DCPaletteSecondaryAccent,
+                                           DCLabelPositionMiddle);
+    [page addArrangedSubview:generalRule];
+    DCStackFullWidth(page, generalRule);
     [page addArrangedSubview:appearanceCard];
     DCStackFullWidth(page, appearanceCard);
 
@@ -357,6 +370,12 @@
                         forOrientation:NSLayoutConstraintOrientationHorizontal];
     [sizeRow setContentCompressionResistancePriority:NSLayoutPriorityRequired
                                       forOrientation:NSLayoutConstraintOrientationHorizontal];
+    NSView* largeRule = DCLabelSeparator(@"Large Files",
+                                        DCLabelWeightNormal,
+                                        DCPaletteSecondaryAccent,
+                                        DCLabelPositionMiddle);
+    [page addArrangedSubview:largeRule];
+    DCStackFullWidth(page, largeRule);
     NSView* largeCard = [self cardTitle:@"Minimum Large Files threshold"
                                  detail:@"Minimum size to scan for large files"
                                 control:sizeRow];
@@ -368,6 +387,12 @@
     _dupHome.action = @selector(duplicatesHomeChanged:);
     [_dupHome setContentHuggingPriority:NSLayoutPriorityRequired
                          forOrientation:NSLayoutConstraintOrientationHorizontal];
+    NSView* dupRule = DCLabelSeparator(@"Duplicates",
+                                      DCLabelWeightNormal,
+                                      DCPaletteSecondaryAccent,
+                                      DCLabelPositionMiddle);
+    [page addArrangedSubview:dupRule];
+    DCStackFullWidth(page, dupRule);
     NSView* dupCard =
         [self cardTitle:@"Look for duplicates at Home"
                  detail:@"Scan for entire home directory to find duplicate items beyond defaults."
