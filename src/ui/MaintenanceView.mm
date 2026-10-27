@@ -6,6 +6,7 @@
 #include "dcmm/common/path.hpp"
 
 #include "dcmm/mac/dcmm.hpp"
+#include "dcmm/mac/helio.hpp"
 
 #include <vector>
 
@@ -159,8 +160,7 @@ ConfirmCopy ConfirmForTask(const std::string& id, const dcmm::MaintenanceTask& t
 
 - (void)updateHelioButton
 {
-  BOOL installed     = [NSFileManager.defaultManager fileExistsAtPath:@"/Applications/Helio.app"];
-  _helioButton.title = installed ? @"Open" : @"Install";
+  _helioButton.title = dcmm::helio_installed() ? @"Open" : @"Install";
 }
 
 - (NSView*)helioCard
@@ -187,15 +187,14 @@ ConfirmCopy ConfirmForTask(const std::string& id, const dcmm::MaintenanceTask& t
 {
   (void)sender;
   NSWorkspace* workspace = NSWorkspace.sharedWorkspace;
-  NSString* appPath      = @"/Applications/Helio.app";
 
-  if ([NSFileManager.defaultManager fileExistsAtPath:appPath])
+  if (dcmm::helio_installed())
   {
-    [workspace openURL:[NSURL fileURLWithPath:appPath]];
+    [workspace openURL:[NSURL fileURLWithPath:DCNS(dcmm::helio_app_path())]];
     return;
   }
 
-  [workspace openURL:[NSURL URLWithString:@"https://helio.dhanushhv.com"]];
+  [workspace openURL:[NSURL URLWithString:DCNS(dcmm::helio_site())]];
 }
 
 - (instancetype)initWithFrame:(NSRect)frame
