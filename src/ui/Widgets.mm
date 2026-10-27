@@ -235,6 +235,137 @@ NSTextField* DCTitleLabel(NSString* text)
   return t;
 }
 
+static NSBox* DCSeparatorRule(void)
+{
+  NSBox* rule                                    = [[NSBox alloc] initWithFrame:NSZeroRect];
+  rule.boxType                                   = NSBoxSeparator;
+  rule.translatesAutoresizingMaskIntoConstraints = NO;
+  [rule.heightAnchor constraintEqualToConstant:1].active = YES;
+  [rule setContentHuggingPriority:1 forOrientation:NSLayoutConstraintOrientationHorizontal];
+  [rule setContentCompressionResistancePriority:1
+                         forOrientation:NSLayoutConstraintOrientationHorizontal];
+  return rule;
+}
+
+@interface DCSeparatorCapsule : NSView
+@property(nonatomic) BOOL prominent;
+@end
+
+@implementation DCSeparatorCapsule
+
+- (instancetype)initWithFrame:(NSRect)frame
+{
+  self = [super initWithFrame:frame];
+  if (self)
+  {
+    self.wantsLayer = YES;
+  }
+  return self;
+}
+
+- (BOOL)wantsUpdateLayer
+{
+  return YES;
+}
+
+- (void)updateLayer
+{
+  if (self.prominent)
+  {
+    self.layer.backgroundColor = NSColor.controlAccentColor.CGColor;
+  }
+  else
+  {
+    self.layer.backgroundColor =
+        [NSColor.controlAccentColor colorWithAlphaComponent:0.1].CGColor;
+  }
+  self.layer.cornerRadius = NSHeight(self.bounds) / 2;
+}
+
+- (void)layout
+{
+  [super layout];
+  self.layer.cornerRadius = NSHeight(self.bounds) / 2;
+}
+
+@end
+
+static NSFontWeight DCSeparatorFontWeight(DCLabelWeight weight)
+{
+  if (weight == DCLabelWeightMedium)
+  {
+    return NSFontWeightMedium;
+  }
+  if (weight == DCLabelWeightSemibold)
+  {
+    return NSFontWeightSemibold;
+  }
+  if (weight == DCLabelWeightBold)
+  {
+    return NSFontWeightBold;
+  }
+  return NSFontWeightRegular;
+}
+
+NSView* DCLabelSeparator(NSString* text,
+                         DCLabelWeight weight,
+                         DCLabelStyle style,
+                         DCLabelPosition position)
+{
+  BOOL prominent = style == DCLabelStyleProminent;
+  NSFont* caption = [NSFont preferredFontForTextStyle:NSFontTextStyleCaption1 options:@{}];
+  NSTextField* label = [NSTextField labelWithString:text ?: @""];
+  label.font = [NSFont systemFontOfSize:caption.pointSize weight:DCSeparatorFontWeight(weight)];
+  label.textColor = prominent ? NSColor.whiteColor : NSColor.controlAccentColor;
+  label.lineBreakMode = NSLineBreakByTruncatingTail;
+  label.maximumNumberOfLines = 1;
+  label.translatesAutoresizingMaskIntoConstraints = NO;
+  [label setContentHuggingPriority:NSLayoutPriorityRequired
+                    forOrientation:NSLayoutConstraintOrientationHorizontal];
+  [label setContentCompressionResistancePriority:NSLayoutPriorityRequired
+                          forOrientation:NSLayoutConstraintOrientationHorizontal];
+
+  DCSeparatorCapsule* capsule = [[DCSeparatorCapsule alloc] initWithFrame:NSZeroRect];
+  capsule.prominent = prominent;
+  capsule.translatesAutoresizingMaskIntoConstraints = NO;
+  [capsule addSubview:label];
+  [NSLayoutConstraint activateConstraints:@[
+    [label.leadingAnchor constraintEqualToAnchor:capsule.leadingAnchor constant:10],
+    [label.trailingAnchor constraintEqualToAnchor:capsule.trailingAnchor constant:-10],
+    [label.topAnchor constraintEqualToAnchor:capsule.topAnchor constant:3],
+    [label.bottomAnchor constraintEqualToAnchor:capsule.bottomAnchor constant:-3],
+  ]];
+  [capsule setContentHuggingPriority:NSLayoutPriorityRequired
+                      forOrientation:NSLayoutConstraintOrientationHorizontal];
+  [capsule setContentCompressionResistancePriority:NSLayoutPriorityRequired
+                            forOrientation:NSLayoutConstraintOrientationHorizontal];
+
+  NSBox* leading  = DCSeparatorRule();
+  NSBox* trailing = DCSeparatorRule();
+  NSMutableArray<NSView*>* parts = [NSMutableArray array];
+  if (position != DCLabelPositionLeft)
+  {
+    [parts addObject:leading];
+  }
+  [parts addObject:capsule];
+  if (position != DCLabelPositionRight)
+  {
+    [parts addObject:trailing];
+  }
+
+  NSStackView* row = [NSStackView stackViewWithViews:parts];
+  row.orientation  = NSUserInterfaceLayoutOrientationHorizontal;
+  row.alignment    = NSLayoutAttributeCenterY;
+  row.spacing      = 10;
+  [row setContentHuggingPriority:NSLayoutPriorityDefaultLow
+                  forOrientation:NSLayoutConstraintOrientationHorizontal];
+  if (position == DCLabelPositionMiddle)
+  {
+    [leading.widthAnchor constraintEqualToAnchor:trailing.widthAnchor].active = YES;
+  }
+  return row;
+}
+
 static BOOL DCNativePillBezel(void)
 {
   return YES;

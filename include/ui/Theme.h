@@ -25,6 +25,29 @@ NSTextField* DCSecondaryLabel(NSString* text);
 NSTextField* DCCaptionLabel(NSString* text);
 NSTextField* DCTitleLabel(NSString* text);
 
+typedef NS_ENUM(NSInteger, DCLabelWeight) {
+  DCLabelWeightNormal = 0,
+  DCLabelWeightMedium,
+  DCLabelWeightSemibold,
+  DCLabelWeightBold,
+};
+
+typedef NS_ENUM(NSInteger, DCLabelStyle) {
+  DCLabelStyleTinted = 0,
+  DCLabelStyleProminent,
+};
+
+typedef NS_ENUM(NSInteger, DCLabelPosition) {
+  DCLabelPositionLeft = 0,
+  DCLabelPositionMiddle,
+  DCLabelPositionRight,
+};
+
+NSView* DCLabelSeparator(NSString* text,
+                         DCLabelWeight weight,
+                         DCLabelStyle style,
+                         DCLabelPosition position);
+
 NSButton* DCPushButton(NSString* title, id target, SEL action);
 NSButton* DCDefaultButton(NSString* title, id target, SEL action);
 NSButton* DCDestructiveButton(NSString* title, id target, SEL action);

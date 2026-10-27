@@ -424,6 +424,13 @@
     [page addArrangedSubview:dupMinCard];
     DCStackFullWidth(page, dupMinCard);
 
+    NSView* permissionsRule = DCLabelSeparator(@"Permissions",
+                                               DCLabelWeightNormal,
+                                               DCLabelStyleTinted,
+                                               DCLabelPositionMiddle);
+    [page addArrangedSubview:permissionsRule];
+    DCStackFullWidth(page, permissionsRule);
+
     NSView* accessCard = [self accessCard];
     [page addArrangedSubview:accessCard];
     DCStackFullWidth(page, accessCard);
