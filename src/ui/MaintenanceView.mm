@@ -76,6 +76,7 @@ ConfirmCopy ConfirmForTask(const std::string& id, const dcmm::MaintenanceTask& t
   dcmm::Engine _engine;
   std::vector<uint64_t> _taskJobs;
   NSMutableArray<DCGlowButton*>* _runButtons;
+  DCGlowButton* _helioButton;
 }
 
 - (DCGlowButton*)executeButton:(SEL)action
@@ -90,6 +91,8 @@ ConfirmCopy ConfirmForTask(const std::string& id, const dcmm::MaintenanceTask& t
                   forOrientation:NSLayoutConstraintOrientationHorizontal];
   [run setContentCompressionResistancePriority:NSLayoutPriorityRequired
                                 forOrientation:NSLayoutConstraintOrientationHorizontal];
+  run.translatesAutoresizingMaskIntoConstraints = NO;
+  [run.widthAnchor constraintGreaterThanOrEqualToConstant:100].active = YES;
 
   return run;
 }
@@ -154,11 +157,30 @@ ConfirmCopy ConfirmForTask(const std::string& id, const dcmm::MaintenanceTask& t
   return [self cardWithTitle:DCNS(task.title) subtitle:DCNS(task.detail) button:run];
 }
 
+- (void)updateHelioButton
+{
+  BOOL installed     = [NSFileManager.defaultManager fileExistsAtPath:@"/Applications/Helio.app"];
+  _helioButton.title = installed ? @"Open" : @"Install";
+}
+
 - (NSView*)helioCard
 {
+  _helioButton = [self executeButton:@selector(openHelio:)];
+  [self updateHelioButton];
+
   return [self cardWithTitle:@"Manage and monitor resources"
                     subtitle:@"Advanced native resource monitor for the macOS"
-                      button:[self executeButton:@selector(openHelio:)]];
+                      button:_helioButton];
+}
+
+- (void)viewDidMoveToWindow
+{
+  [super viewDidMoveToWindow];
+
+  if (self.window != nil)
+  {
+    [self updateHelioButton];
+  }
 }
 
 - (void)openHelio:(NSButton*)sender
