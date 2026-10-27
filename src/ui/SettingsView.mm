@@ -83,12 +83,144 @@
 }
 @end
 
+@interface DCThemeCard : NSView
+@property(nonatomic, weak) id target;
+@property(nonatomic) SEL action;
+@property(nonatomic) ui::AppearancePref theme;
+@property(nonatomic) BOOL chosen;
+@property(nonatomic, copy) NSString* title;
+@end
+
+@implementation DCThemeCard
+
+- (instancetype)initWithTheme:(ui::AppearancePref)theme title:(NSString*)title
+{
+  self = [super initWithFrame:NSZeroRect];
+  if (self)
+  {
+    _theme                       = theme;
+    _title                       = [title copy];
+    self.wantsLayer              = YES;
+    self.layer.cornerRadius      = 12;
+    self.layer.masksToBounds     = YES;
+    self.accessibilityRole       = NSAccessibilityRadioButtonRole;
+    self.accessibilityLabel      = title;
+  }
+  return self;
+}
+
+- (BOOL)acceptsFirstResponder
+{
+  return YES;
+}
+
+- (void)setChosen:(BOOL)chosen
+{
+  if (_chosen == chosen)
+  {
+    return;
+  }
+  _chosen = chosen;
+  self.accessibilityValue = chosen ? @YES : @NO;
+  [self setNeedsDisplay:YES];
+}
+
+- (void)viewDidChangeEffectiveAppearance
+{
+  [super viewDidChangeEffectiveAppearance];
+  [self setNeedsDisplay:YES];
+}
+
+- (void)drawSwatch:(NSRect)rect light:(BOOL)light
+{
+  NSColor* fill   = [NSColor colorWithCalibratedWhite:light ? 0.96 : 0.18 alpha:1];
+  NSColor* rail   = [NSColor colorWithCalibratedWhite:light ? 0.86 : 0.28 alpha:1];
+  NSColor* line   = [NSColor colorWithCalibratedWhite:light ? 0.72 : 0.40 alpha:1];
+  [fill setFill];
+  NSRectFill(rect);
+  NSRect bar = rect;
+  bar.size.width = 10;
+  [rail setFill];
+  NSRectFill(bar);
+  [line setFill];
+  NSRect row = NSMakeRect(NSMinX(rect) + 16, NSMidY(rect) - 7, NSWidth(rect) - 24, 3);
+  NSRectFill(row);
+  row.origin.y -= 8;
+  row.size.width *= 0.62;
+  NSRectFill(row);
+}
+
+- (void)drawRect:(NSRect)dirtyRect
+{
+  (void)dirtyRect;
+  NSRect bounds = self.bounds;
+  [[NSColor controlBackgroundColor] setFill];
+  NSRectFill(bounds);
+
+  NSRect preview = NSMakeRect(10, 32, NSWidth(bounds) - 20, NSHeight(bounds) - 42);
+  NSBezierPath* clip =
+      [NSBezierPath bezierPathWithRoundedRect:preview xRadius:7 yRadius:7];
+  [NSGraphicsContext saveGraphicsState];
+  [clip addClip];
+  if (self.theme == ui::AppearancePref::System)
+  {
+    NSRect left  = preview;
+    left.size.width = floor(NSWidth(preview) / 2);
+    NSRect right = preview;
+    right.origin.x   = NSMaxX(left);
+    right.size.width = NSMaxX(preview) - right.origin.x;
+    [self drawSwatch:left light:YES];
+    [self drawSwatch:right light:NO];
+  }
+  else
+  {
+    [self drawSwatch:preview light:self.theme == ui::AppearancePref::Light];
+  }
+  [NSGraphicsContext restoreGraphicsState];
+
+  NSMutableParagraphStyle* style = [[NSMutableParagraphStyle alloc] init];
+  style.alignment                = NSTextAlignmentCenter;
+  NSColor* textColor             = self.chosen ? NSColor.controlAccentColor : NSColor.labelColor;
+  NSFont* font                   = [NSFont systemFontOfSize:12
+                                                     weight:self.chosen ? NSFontWeightSemibold
+                                                                        : NSFontWeightMedium];
+  [self.title drawInRect:NSMakeRect(4, 8, NSWidth(bounds) - 8, 18)
+          withAttributes:@{
+            NSFontAttributeName : font,
+            NSForegroundColorAttributeName : textColor,
+            NSParagraphStyleAttributeName : style
+          }];
+
+  NSColor* stroke = self.chosen ? NSColor.controlAccentColor : NSColor.separatorColor;
+  CGFloat width   = self.chosen ? 2 : 1;
+  NSRect ring     = NSInsetRect(bounds, width / 2, width / 2);
+  NSBezierPath* path =
+      [NSBezierPath bezierPathWithRoundedRect:ring xRadius:12 - width yRadius:12 - width];
+  path.lineWidth = width;
+  [stroke setStroke];
+  [path stroke];
+}
+
+- (void)mouseUp:(NSEvent*)event
+{
+  NSPoint point = [self convertPoint:event.locationInWindow fromView:nil];
+  if (!NSPointInRect(point, self.bounds) || self.action == nil)
+  {
+    return;
+  }
+  [NSApp sendAction:self.action to:self.target from:self];
+}
+
+@end
+
 @interface DCSettingsView () <NSTextFieldDelegate>
 @end
 
 @implementation DCSettingsView
 {
-  NSPopUpButton* _appearance;
+  DCThemeCard* _themeSystem;
+  DCThemeCard* _themeLight;
+  DCThemeCard* _themeDark;
   NSPopUpButton* _cleaning;
   NSTextField* _largeFileMin;
   NSSwitch* _dupHome;
@@ -107,13 +239,44 @@
     [page addArrangedSubview:header];
     DCStackFullWidth(page, header);
 
-    _appearance = [[NSPopUpButton alloc] initWithFrame:NSZeroRect pullsDown:NO];
-    [_appearance addItemsWithTitles:@[ @"System", @"Light", @"Dark" ]];
-    _appearance.target     = self;
-    _appearance.action     = @selector(appearanceChanged:);
-    NSView* appearanceCard = [self cardTitle:@"Appearance"
-                                      detail:@"Follow macOS, or lock the app to Light or Dark."
-                                     control:_appearance];
+    _themeSystem        = [[DCThemeCard alloc] initWithTheme:ui::AppearancePref::System title:@"System"];
+    _themeSystem.target = self;
+    _themeSystem.action = @selector(themeChosen:);
+    [_themeSystem.heightAnchor constraintEqualToConstant:112].active = YES;
+    _themeLight        = [[DCThemeCard alloc] initWithTheme:ui::AppearancePref::Light title:@"Light"];
+    _themeLight.target = self;
+    _themeLight.action = @selector(themeChosen:);
+    [_themeLight.heightAnchor constraintEqualToConstant:112].active = YES;
+    _themeDark        = [[DCThemeCard alloc] initWithTheme:ui::AppearancePref::Dark title:@"Dark"];
+    _themeDark.target = self;
+    _themeDark.action = @selector(themeChosen:);
+    [_themeDark.heightAnchor constraintEqualToConstant:112].active = YES;
+    NSStackView* themes = [NSStackView stackViewWithViews:@[ _themeSystem, _themeLight, _themeDark ]];
+    themes.orientation  = NSUserInterfaceLayoutOrientationHorizontal;
+    themes.distribution = NSStackViewDistributionFillEqually;
+    themes.alignment    = NSLayoutAttributeCenterY;
+    themes.spacing      = 12;
+    NSTextField* themeTitle = DCLabel(@"Appearance");
+    themeTitle.font         = [NSFont systemFontOfSize:13 weight:NSFontWeightSemibold];
+    NSTextField* themeDetail =
+        DCCaptionLabel(@"Follow macOS, or lock the app to Light or Dark.");
+    themeDetail.maximumNumberOfLines = 2;
+    NSStackView* themeBody =
+        [NSStackView stackViewWithViews:@[ themeTitle, themeDetail, themes ]];
+    themeBody.orientation = NSUserInterfaceLayoutOrientationVertical;
+    themeBody.alignment   = NSLayoutAttributeLeading;
+    themeBody.spacing     = 10;
+    themeBody.edgeInsets  = NSEdgeInsetsMake(14, 14, 14, 14);
+    DCStackFullWidth(themeBody, themes);
+    NSVisualEffectView* appearanceCard = [[NSVisualEffectView alloc] initWithFrame:NSZeroRect];
+    appearanceCard.material            = NSVisualEffectMaterialContentBackground;
+    appearanceCard.blendingMode        = NSVisualEffectBlendingModeWithinWindow;
+    appearanceCard.state               = NSVisualEffectStateFollowsWindowActiveState;
+    appearanceCard.wantsLayer          = YES;
+    appearanceCard.layer.cornerRadius  = 10;
+    appearanceCard.layer.masksToBounds = YES;
+    [appearanceCard addSubview:themeBody];
+    DCPinEdges(themeBody, appearanceCard);
     [page addArrangedSubview:appearanceCard];
     DCStackFullWidth(page, appearanceCard);
 
@@ -266,23 +429,26 @@
   return card;
 }
 
+- (void)showTheme:(ui::AppearancePref)pref
+{
+  _themeSystem.chosen = pref == ui::AppearancePref::System;
+  _themeLight.chosen  = pref == ui::AppearancePref::Light;
+  _themeDark.chosen   = pref == ui::AppearancePref::Dark;
+}
+
 - (void)reloadFromDefaults
 {
-  [_appearance selectItemAtIndex:static_cast<NSInteger>(DCAppearancePref())];
+  [self showTheme:DCAppearancePref()];
   [_cleaning selectItemAtIndex:static_cast<NSInteger>(DCCleanPref())];
   _largeFileMin.stringValue = [NSString stringWithFormat:@"%ld", (long)DCLargeFileMinMB()];
   _dupHome.state     = DCDuplicatesScanHome() ? NSControlStateValueOn : NSControlStateValueOff;
   _dupMin.doubleValue = DCDuplicatesMinKBStopIndex();
 }
 
-- (void)appearanceChanged:(NSPopUpButton*)sender
+- (void)themeChosen:(DCThemeCard*)sender
 {
-  NSInteger i = sender.indexOfSelectedItem;
-  if (i < 0 || i > 2)
-  {
-    i = 0;
-  }
-  DCSetAppearancePref(static_cast<ui::AppearancePref>(i));
+  DCSetAppearancePref(sender.theme);
+  [self showTheme:sender.theme];
 }
 
 - (void)duplicatesHomeChanged:(NSSwitch*)sender
