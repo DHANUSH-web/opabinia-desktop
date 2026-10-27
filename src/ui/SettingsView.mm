@@ -517,7 +517,7 @@
     DCPinEdges(themeBody, appearanceCard);
     NSView* generalRule = DCLabelSeparator(@"General",
                                            DCLabelWeightNormal,
-                                           DCPaletteSecondaryAccent,
+                                           DCPaletteSecondaryDim,
                                            DCLabelPositionMiddle);
     [page addArrangedSubview:generalRule];
     DCStackFullWidth(page, generalRule);
@@ -556,7 +556,7 @@
                                       forOrientation:NSLayoutConstraintOrientationHorizontal];
     NSView* largeRule = DCLabelSeparator(@"Large Files",
                                         DCLabelWeightNormal,
-                                        DCPaletteSecondaryAccent,
+                                        DCPaletteSecondaryDim,
                                         DCLabelPositionMiddle);
     [page addArrangedSubview:largeRule];
     DCStackFullWidth(page, largeRule);
@@ -573,7 +573,7 @@
                          forOrientation:NSLayoutConstraintOrientationHorizontal];
     NSView* dupRule = DCLabelSeparator(@"Duplicates",
                                       DCLabelWeightNormal,
-                                      DCPaletteSecondaryAccent,
+                                      DCPaletteSecondaryDim,
                                       DCLabelPositionMiddle);
     [page addArrangedSubview:dupRule];
     DCStackFullWidth(page, dupRule);
@@ -635,7 +635,7 @@
 
     NSView* permissionsRule = DCLabelSeparator(@"Permissions",
                                                DCLabelWeightNormal,
-                                               DCPaletteSecondaryAccent,
+                                               DCPaletteSecondaryDim,
                                                DCLabelPositionMiddle);
     [page addArrangedSubview:permissionsRule];
     DCStackFullWidth(page, permissionsRule);
