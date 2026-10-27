@@ -982,7 +982,7 @@ static NSURL* DCDevRepoURL(NSString* s)
     [self addSubview:_apps];
     [self addSubview:_tools];
 
-    _selectorLeading = [_selector.leadingAnchor constraintEqualToAnchor:self.leadingAnchor constant:3];
+    _selectorLeading = [_selector.leadingAnchor constraintEqualToAnchor:self.leadingAnchor constant:1];
     [NSLayoutConstraint activateConstraints:@[
       [self.heightAnchor constraintEqualToConstant:36],
       [_apps.leadingAnchor constraintEqualToAnchor:self.leadingAnchor],
@@ -993,11 +993,11 @@ static NSURL* DCDevRepoURL(NSString* s)
       [_tools.topAnchor constraintEqualToAnchor:self.topAnchor],
       [_tools.bottomAnchor constraintEqualToAnchor:self.bottomAnchor],
       [_apps.widthAnchor constraintEqualToAnchor:_tools.widthAnchor],
-      [_apps.widthAnchor constraintGreaterThanOrEqualToConstant:132],
+      [_apps.widthAnchor constraintGreaterThanOrEqualToConstant:100],
       _selectorLeading,
       [_selector.centerYAnchor constraintEqualToAnchor:self.centerYAnchor],
       [_selector.heightAnchor constraintEqualToAnchor:self.heightAnchor constant:-6],
-      [_selector.widthAnchor constraintEqualToAnchor:self.widthAnchor multiplier:0.5 constant:-6],
+      [_selector.widthAnchor constraintEqualToAnchor:self.widthAnchor multiplier:0.5 constant:-2],
     ]];
     [self applyTitles];
   }
@@ -1037,9 +1037,9 @@ static NSURL* DCDevRepoURL(NSString* s)
 {
   if (_toolchain)
   {
-    return NSWidth(self.bounds) / 2 + 3;
+    return NSWidth(self.bounds) / 2 + 1;
   }
-  return 3;
+  return 1;
 }
 
 - (void)applyTitles
